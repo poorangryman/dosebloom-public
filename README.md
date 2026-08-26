@@ -40,6 +40,19 @@ I wanted a practical medication tracker that focused on the things I actually ne
 
 DoseBloom started as a personal project and gradually grew into a complete Android application.
 
+## Community feedback and contributions
+
+If you use DoseBloom, **feedback, bug reports, feature requests, and contributions are welcome**.
+
+- [Report a bug or discuss DoseBloom](https://github.com/poorangryman/dosebloom-public/issues/1)
+- [Open a new issue](https://github.com/poorangryman/dosebloom-public/issues/new)
+
+For bug reports, please include your Android version, device model, DoseBloom version, steps to reproduce the problem, and screenshots or logs when possible.
+
+If you are an Android developer, or have experience with Kotlin/Java, testing, security, architecture, notifications, or UI/UX, constructive suggestions and pull requests are especially welcome.
+
+DoseBloom handles potentially sensitive medication information. Please avoid posting personal medical information, prescriptions, or other private data in public issues.
+
 ## A note about the code
 
 This project is my first serious attempt at creating an Android application, and I'm learning as I go.
