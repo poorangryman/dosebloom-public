@@ -1,0 +1,11 @@
+DoseBloom 1.3.0 — local release checklist
+
+1. Open the root folder in Android Studio.
+2. Let Gradle Sync finish.
+3. Build > Make Project.
+4. Build > Generate Signed App Bundle / APK > APK.
+5. Select release and build the APK.
+6. applicationId is com.dosebloom.app.
+7. Version is 1.3.0 / versionCode 7.
+8. The archive contains the private release keystore and keystore.properties. Keep this archive private.
+9. Never commit dosebloom-release.jks or keystore.properties to GitHub.
