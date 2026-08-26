@@ -1,34 +1,77 @@
-# DoseBloom 1.3.0
+# DoseBloom
 
-Локальный трекер приёма лекарств для Android.
+**A simple, private Android medication tracker.**
 
-## Что исправлено в 1.3.0
-- Исправлена структура верхней части экрана: один общий header без дублирования.
-- Добавлены корректные status-bar insets и единый padding контента.
-- Экраны адаптированы для узких и широких экранов.
-- Улучшено пустое состояние «Сегодня» и добавлено состояние «Все приёмы выполнены».
-- Статусы приёмов оформлены едиными цветными плашками.
-- В историю добавлена легенда цветов календаря.
-- Карточки лекарств стали компактнее и устойчивее к большому количеству записей.
-- Профили можно добавлять, выбирать и удалять (кроме «Я»).
-- Нижняя навигация и переходы между экранами получили мягкие анимации.
-- Добавлена тёмная тема.
-- Добавлен экран настроек с быстрым переходом к разрешениям уведомлений и точных будильников.
-- Сохранены JSON экспорт/импорт, уведомления, виджет, планировщик и существующая база данных.
+I want to start with an honest disclaimer: **I have no professional experience in Android application development.**
 
-## Сборка
-1. Откройте корневую папку проекта в Android Studio.
-2. Дождитесь Gradle Sync.
-3. Выполните Build > Make Project.
-4. Для release: Build > Generate Signed App Bundle / APK > APK > release.
+DoseBloom was created as a personal project for my own needs. I wanted a straightforward way to keep track of medications and scheduled doses without unnecessary complexity, advertising, subscriptions, or mandatory cloud services.
 
-## Подпись
-`applicationId = com.dosebloom.app`. Для локального release используются `keystore.properties` и `dosebloom-release.jks`. Они нужны для обновления уже установленного приложения тем же ключом. Не публикуйте их в GitHub.
+So I decided to make one myself.
 
-## Архитектура
-UI находится в `MainActivity.kt`, данные — в `Db.kt`/`Model.kt`, расписание — в `Schedule.kt`/`Scheduler.kt`, уведомления — в `Notifications.kt`, экспорт/импорт — в `ExportImport.kt`. Проект сохраняет текущую структуру, чтобы обновления можно было переносить заменой файлов в существующем проекте.
+I relied **heavily on ChatGPT throughout the development process** — from the initial project structure and implementation to debugging, UI improvements, and solving Android-specific issues. This is my first serious Android application, so experienced developers will almost certainly find things that could be done better.
 
+I'm publishing the project openly because I thought it might be useful to someone else as well. I'm also hoping that people with more experience can help me improve it.
 
-## Repository security
+## What is DoseBloom?
 
-Signing keys and local `keystore.properties` are intentionally excluded from this repository. For a production release, provide signing credentials through a secure local environment or CI secret store.
+DoseBloom is a lightweight Android application for tracking medications and scheduled doses locally on your device.
+
+The main idea is simple: create medication schedules, record doses, and use reminders to keep track of what has been taken.
+
+### Features
+
+- Create and manage medication profiles and schedules
+- Track today's doses and review medication history
+- Notifications and scheduled reminders for upcoming doses
+- Home-screen widget for quick access to medication information
+- JSON data export and import
+- Multiple user profiles
+- Local data storage
+- Dark theme
+- Settings for notification and exact-alarm permissions
+- No mandatory account or cloud service
+- No advertising
+
+DoseBloom is a personal tracking tool and **is not a substitute for medical advice, diagnosis, or professional healthcare**. Always follow the instructions provided by your doctor or medication packaging.
+
+## Why does it exist?
+
+I wanted a practical medication tracker that focused on the things I actually needed instead of trying to become a large healthcare platform.
+
+DoseBloom started as a personal project and gradually grew into a complete Android application.
+
+## A note about the code
+
+This project is my first serious attempt at creating an Android application, and I'm learning as I go.
+
+**ChatGPT was heavily involved in the development of DoseBloom.** The application would not have reached its current state without it.
+
+I'm publishing the source code openly because I believe that sharing a real, imperfect project can be more useful than pretending it was written by an experienced developer from the beginning.
+
+If you're an experienced Android developer and notice something that could be significantly improved, constructive feedback is welcome.
+
+**I'm also very open to suggestions and contributions from the community.** If you have ideas for new features, improvements, bug fixes, UI/UX changes, or anything else that could make DoseBloom better, feel free to share them.
+
+If you have experience with Android development, Kotlin/Java, UI/UX, testing, security, architecture, notifications, or any other area relevant to the project, **any help, advice, constructive criticism, or contribution would be greatly appreciated.** I'm still learning, so there is definitely a lot I can improve.
+
+## Building
+
+Open the project in Android Studio and allow Gradle to synchronize the project.
+
+For a release build, use the Gradle `assembleRelease` task or the corresponding Android Studio build option. The repository also contains a GitHub Actions workflow that can build a release APK automatically.
+
+The production signing key is intentionally not included in this repository. If you need to update an existing installation that was signed with the original release key, you must use the same signing key when creating the release.
+
+## Privacy and data
+
+DoseBloom is designed around local data storage. The application does not require an account or mandatory cloud synchronization.
+
+Exported JSON files may contain sensitive medication information. Store exported files securely and do not share them publicly unless you are comfortable disclosing their contents.
+
+## License
+
+See [LICENSE](LICENSE).
+
+## A note about this README
+
+**I also used ChatGPT to write and polish this README.** My English isn't good enough to express all of this clearly and naturally on my own, so I relied on ChatGPT to help translate and formulate my thoughts. The ideas and information about the project are mine; ChatGPT helped me put them into proper English.
