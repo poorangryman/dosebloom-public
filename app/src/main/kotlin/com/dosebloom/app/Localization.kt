@@ -1,8 +1,6 @@
 package com.dosebloom.app
 
 import android.content.Context
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
 
 object Localization {
     private const val PREFS = "dosebloom_localization"
@@ -18,12 +16,14 @@ object Localization {
     fun setLanguage(context: Context, language: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit().putString(KEY_LANGUAGE, language).apply()
-        val locales = when (language) {
-            RUSSIAN -> LocaleListCompat.forLanguageTags("ru")
-            ENGLISH -> LocaleListCompat.forLanguageTags("en")
-            else -> LocaleListCompat.getEmptyLocaleList()
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            val localeManager = context.getSystemService(android.app.LocaleManager::class.java)
+            localeManager.applicationLocales = when (language) {
+                RUSSIAN -> android.os.LocaleList.forLanguageTags("ru")
+                ENGLISH -> android.os.LocaleList.forLanguageTags("en")
+                else -> android.os.LocaleList.getEmptyLocaleList()
+            }
         }
-        AppCompatDelegate.setApplicationLocales(locales)
     }
 
     fun profileDisplayName(context: Context, profile: String): String =
