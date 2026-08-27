@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DoseBloom</string>
+    <string name="notification_channel_name">Напоминания DoseBloom</string>
+    <string name="today">Сегодня</string>
+    <string name="history">История</string>
+    <string name="medicines">Лекарства</string>
+    <string name="today_calm_title">На сегодня всё спокойно</string>
+    <string name="today_calm_body">Нет запланированных приёмов. Если лекарство принимается по необходимости, его можно отметить на экране «Лекарства».</string>
+    <string name="today_completed_title">Все приёмы выполнены</string>
+    <string name="today_completed_body">На сегодня больше ничего не запланировано.</string>
+    <string name="take">ПРИНЯТЬ</string>
+    <string name="fact_time">Факт: %1$s</string>
+    <string name="status_taken">Принято</string>
+    <string name="status_skipped">Пропущено</string>
+    <string name="status_pending">Ожидает</string>
+    <string name="intakes">Приёмы</string>
+    <string name="history_empty">За выбранный месяц нет отмеченных приёмов.</string>
+    <string name="medicine_fallback">Лекарство</string>
+    <string name="planned">Запланировано</string>
+    <string name="days_mon">Пн</string><string name="days_tue">Вт</string><string name="days_wed">Ср</string><string name="days_thu">Чт</string><string name="days_fri">Пт</string><string name="days_sat">Сб</string><string name="days_sun">Вс</string>
+    <string name="export">Экспорт</string><string name="import">Импорт</string>
+    <string name="medicines_empty">Добавьте первое лекарство кнопкой +</string>
+    <string name="delete_medicine_title">Удалить %1$s?</string><string name="delete_medicine_body">История этого лекарства тоже будет удалена.</string>
+    <string name="delete">Удалить</string><string name="cancel">Отмена</string>
+    <string name="as_needed">По необходимости</string><string name="time_label">Время: %1$s</string>
+    <string name="course">Курс: %1$s%2$s</string><string name="remaining_stock">Осталось: %1$d • порог: %2$d</string>
+    <string name="low_stock">⚠ Осталось мало</string><string name="edit">Изменить</string>
+    <string name="new_medicine">Новое лекарство</string><string name="edit_medicine">Изменить лекарство</string>
+    <string name="name">Название</string><string name="dose">Доза</string><string name="unit">Единица</string>
+    <string name="time_example">Время: 08:00, 20:00</string><string name="start_date">Начало YYYY-MM-DD</string><string name="end_date">Конец YYYY-MM-DD</string>
+    <string name="stock">Запас</string><string name="low_stock_threshold">Порог</string><string name="note">Заметка</string>
+    <string name="invalid_time">Введите хотя бы одно время в формате ЧЧ:ММ</string><string name="invalid_start_date">Дата начала: YYYY-MM-DD</string><string name="invalid_end_date">Дата окончания: YYYY-MM-DD</string><string name="end_before_start">Дата окончания раньше даты начала</string>
+    <string name="save">Сохранить</string><string name="delete_profile_title">Удалить профиль?</string>
+    <string name="delete_profile_body">Профиль «%1$s» и его выбор будут удалены. Лекарства этого профиля останутся в базе данных.</string>
+    <string name="profile">Профиль</string><string name="new_profile">Новый профиль</string><string name="add_and_select">Добавить и выбрать</string><string name="done">Готово</string>
+    <string name="settings">Настройки</string><string name="dark_theme">Тёмная тема</string><string name="dark_theme_summary">Запоминается между запусками</string>
+    <string name="notifications">Уведомления</string><string name="notification_settings_summary">Напоминания и точное расписание управляются системными разрешениями Android.</string>
+    <string name="open_notification_settings">Открыть настройки уведомлений</string><string name="exact_alarm_settings">Настроить точные будильники</string>
+    <string name="language">Язык</string><string name="system_default">По умолчанию системы</string><string name="russian">Русский</string><string name="english">English</string>
+    <string name="default_profile">Я</string><string name="default_unit">таблетка</string>
+    <string name="next_dose">Следующий приём</string><string name="no_upcoming_doses">Нет ближайших приёмов</string>
+    <string name="notification_title">DoseBloom • время приёма</string><string name="notification_taken">ПРИНЯТО</string><string name="notification_postpone">+10 МИН</string><string name="notification_skip">ПРОПУСТИТЬ</string>
+</resources>
