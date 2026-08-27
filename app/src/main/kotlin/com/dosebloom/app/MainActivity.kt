@@ -73,6 +73,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -167,7 +168,7 @@ class MainActivity : ComponentActivity() {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             "dosebloom_reminders",
-            "Напоминания DoseBloom",
+            getString(R.string.notification_channel_name),
             NotificationManager.IMPORTANCE_HIGH
         )
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
@@ -181,8 +182,15 @@ class MainActivity : ComponentActivity() {
 
     private fun today(): String = Schedule.todayKey()
 
+    private fun currentLocale(): Locale = if (Build.VERSION.SDK_INT >= 24) {
+        resources.configuration.locales[0] ?: Locale.getDefault()
+    } else {
+        @Suppress("DEPRECATION")
+        resources.configuration.locale
+    }
+
     private fun prettyDate(key: String): String =
-        SimpleDateFormat("EEEE, d MMMM", Locale("ru"))
+        SimpleDateFormat("EEEE, d MMMM", currentLocale())
             .format(Schedule.parseDate(key).time)
             .replaceFirstChar { it.uppercase() }
 
@@ -213,6 +221,7 @@ class MainActivity : ComponentActivity() {
         var selectedProfile by remember { mutableStateOf("Я") }
         var profileDialog by remember { mutableStateOf(false) }
         var settingsDialog by remember { mutableStateOf(false) }
+        var language by remember { mutableStateOf(Localization.currentLanguage(this@MainActivity)) }
         var editorVisible by remember { mutableStateOf(false) }
         var editingMedicine by remember { mutableStateOf<Medicine?>(null) }
 
@@ -232,59 +241,42 @@ class MainActivity : ComponentActivity() {
                 )
             },
             bottomBar = {
-                NavigationBar(
-                    tonalElevation = 2.dp
-                ) {
+                NavigationBar(tonalElevation = 2.dp) {
                     NavigationBarItem(
                         selected = tab == 0,
                         onClick = { tab = 0 },
                         icon = { Text("●", fontSize = 16.sp) },
-                        label = { Text("Сегодня") }
+                        label = { Text(stringResource(R.string.today)) }
                     )
                     NavigationBarItem(
                         selected = tab == 1,
                         onClick = { tab = 1 },
                         icon = { Text("▦", fontSize = 20.sp) },
-                        label = { Text("История") }
+                        label = { Text(stringResource(R.string.history)) }
                     )
                     NavigationBarItem(
                         selected = tab == 2,
                         onClick = { tab = 2 },
                         icon = { Text("+", fontSize = 22.sp) },
-                        label = { Text("Лекарства") }
+                        label = { Text(stringResource(R.string.medicines)) }
                     )
                 }
             },
             floatingActionButton = {
-                if (tab == 2) {
-                    FloatingActionButton(onClick = { editorVisible = true }) {
-                        Text("+", fontSize = 26.sp)
-                    }
+                if (tab == 2) FloatingActionButton(onClick = { editorVisible = true }) {
+                    Text("+", fontSize = 26.sp)
                 }
             }
         ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
+            Box(Modifier.fillMaxSize().padding(innerPadding)) {
                 AnimatedContent(
                     targetState = tab,
                     transitionSpec = { fadeIn() togetherWith fadeOut() },
                     label = "tab_transition"
                 ) { selectedTab ->
                     when (selectedTab) {
-                        0 -> Today(
-                            medicines = medicines,
-                            refresh = refresh,
-                            changed = { refresh++ },
-                            modifier = Modifier.fillMaxSize()
-                        )
-                        1 -> History(
-                            medicines = medicines,
-                            refresh = refresh,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                        0 -> Today(medicines, refresh, { refresh++ }, Modifier.fillMaxSize())
+                        1 -> History(medicines, refresh, Modifier.fillMaxSize())
                         else -> Medicines(
                             medicines = medicines,
                             changed = { refresh++ },
@@ -292,9 +284,7 @@ class MainActivity : ComponentActivity() {
                                 pendingExport = { uri -> ExportImport.export(this@MainActivity, uri) }
                                 exportLauncher.launch("DoseBloom-${today()}.json")
                             },
-                            onImport = {
-                                importLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
-                            },
+                            onImport = { importLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) },
                             modifier = Modifier.fillMaxSize()
                         )
                     }
@@ -306,14 +296,10 @@ class MainActivity : ComponentActivity() {
             MedicineEditor(
                 existing = editingMedicine,
                 profile = selectedProfile,
-                onDismiss = {
-                    editorVisible = false
-                    editingMedicine = null
-                },
+                onDismiss = { editorVisible = false; editingMedicine = null },
                 onSave = { medicine ->
-                    if (medicine.id == 0L) {
-                        db.insertMedicine(medicine)
-                    } else {
+                    if (medicine.id == 0L) db.insertMedicine(medicine)
+                    else {
                         editingMedicine?.let { Scheduler.cancelMedicine(this, it) }
                         db.updateMedicine(medicine)
                     }
@@ -329,15 +315,8 @@ class MainActivity : ComponentActivity() {
         if (profileDialog) {
             ProfileDialog(
                 current = selectedProfile,
-                onSelect = {
-                    selectedProfile = it
-                    profileDialog = false
-                },
-                onAdd = { name ->
-                    db.addProfile(name)
-                    selectedProfile = name.trim()
-                    profileDialog = false
-                },
+                onSelect = { selectedProfile = it; profileDialog = false },
+                onAdd = { name -> db.addProfile(name); selectedProfile = name.trim(); profileDialog = false },
                 onDelete = { name ->
                     db.removeProfile(name)
                     if (selectedProfile == name) selectedProfile = "Я"
@@ -349,134 +328,85 @@ class MainActivity : ComponentActivity() {
             SettingsDialog(
                 darkMode = darkMode,
                 onDarkModeChanged = onDarkModeChanged,
+                language = language,
+                onLanguageChanged = { selectedLanguage ->
+                    Localization.setLanguage(this@MainActivity, selectedLanguage)
+                    language = selectedLanguage
+                    recreate()
+                },
                 onDismiss = { settingsDialog = false }
             )
         }
     }
 
     @Composable
-    private fun AppHeader(
-        dateText: String,
-        profile: String,
-        onProfile: () -> Unit,
-        onSettings: () -> Unit
-    ) {
+    private fun AppHeader(dateText: String, profile: String, onProfile: () -> Unit, onSettings: () -> Unit) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 10.dp)
+            modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp, vertical = 10.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "DoseBloom",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Text("DoseBloom", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.weight(1f))
-                TextButton(onClick = onProfile) { Text(profile) }
-                IconButton(onClick = onSettings, modifier = Modifier.size(44.dp)) {
-                    Text("⚙", fontSize = 21.sp)
-                }
+                TextButton(onClick = onProfile) { Text(Localization.profileDisplayName(this@MainActivity, profile)) }
+                IconButton(onClick = onSettings, modifier = Modifier.size(44.dp)) { Text("⚙", fontSize = 21.sp) }
             }
-            Text(text = dateText, style = MaterialTheme.typography.bodyMedium)
+            Text(dateText, style = MaterialTheme.typography.bodyMedium)
         }
     }
 
     @Composable
-    private fun Today(
-        medicines: List<Medicine>,
-        refresh: Int,
-        changed: () -> Unit,
-        modifier: Modifier = Modifier
-    ) {
+    private fun Today(medicines: List<Medicine>, refresh: Int, changed: () -> Unit, modifier: Modifier = Modifier) {
         val date = today()
         val events = remember(medicines, refresh, date) { Schedule.events(medicines, date) }
         val records = remember(medicines, refresh, date) { db.intakes(date) }
-        val completed = events.isNotEmpty() && events.all { event ->
-            records.any { it.medicineId == event.first.id && it.plannedTime == event.second }
-        }
-
+        val completed = events.isNotEmpty() && events.all { event -> records.any { it.medicineId == event.first.id && it.plannedTime == event.second } }
         LazyColumn(
-            modifier = modifier
-                .widthIn(max = 760.dp)
-                .padding(horizontal = 16.dp),
+            modifier = modifier.widthIn(max = 760.dp).padding(horizontal = 16.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 10.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            item {
-                Text("Сегодня", style = MaterialTheme.typography.headlineMedium)
-            }
-            if (events.isEmpty()) {
-                item { EmptyTodayCard() }
-            } else if (completed) {
-                item { CompletedTodayCard() }
-            }
+            item { Text(stringResource(R.string.today), style = MaterialTheme.typography.headlineMedium) }
+            if (events.isEmpty()) item { EmptyTodayCard() } else if (completed) item { CompletedTodayCard() }
             items(events, key = { "${it.first.id}-${it.second}" }) { event ->
                 val medicine = event.first
                 val time = event.second
-                val record = records.firstOrNull {
-                    it.medicineId == medicine.id && it.plannedTime == time
-                }
-                DoseCard(
-                    medicine = medicine,
-                    time = time,
-                    status = record?.status,
-                    actual = record?.actualMillis,
-                    onTake = {
-                        if (!db.hasIntake(medicine.id, date, time)) {
-                            db.addIntake(medicine.id, date, time, "TAKEN")
-                            db.decreaseStock(medicine.id)
-                            refreshWidget()
-                            changed()
-                        }
+                val record = records.firstOrNull { it.medicineId == medicine.id && it.plannedTime == time }
+                DoseCard(medicine, time, record?.status, record?.actualMillis) {
+                    if (!db.hasIntake(medicine.id, date, time)) {
+                        db.addIntake(medicine.id, date, time, "TAKEN")
+                        db.decreaseStock(medicine.id)
+                        refreshWidget()
+                        changed()
                     }
-                )
+                }
             }
         }
     }
 
     @Composable
     private fun EmptyTodayCard() {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-        ) {
+        Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
             Column(Modifier.padding(20.dp)) {
-                Text("На сегодня всё спокойно", style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.today_calm_title), style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.height(6.dp))
-                Text("Нет запланированных приёмов. Если лекарство принимается по необходимости, его можно отметить на экране «Лекарства».")
+                Text(stringResource(R.string.today_calm_body))
             }
         }
     }
 
     @Composable
     private fun CompletedTodayCard() {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFDDEFE2))
-        ) {
+        Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFDDEFE2))) {
             Column(Modifier.padding(18.dp)) {
-                Text("Все приёмы выполнены", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text("На сегодня больше ничего не запланировано.")
+                Text(stringResource(R.string.today_completed_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.today_completed_body))
             }
         }
     }
 
     @Composable
-    private fun DoseCard(
-        medicine: Medicine,
-        time: String,
-        status: String?,
-        actual: Long?,
-        onTake: () -> Unit
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .animateContentSize(),
-            shape = RoundedCornerShape(20.dp)
-        ) {
+    private fun DoseCard(medicine: Medicine, time: String, status: String?, actual: Long?, onTake: () -> Unit) {
+        Card(Modifier.fillMaxWidth().animateContentSize(), shape = RoundedCornerShape(20.dp)) {
             Column(Modifier.padding(18.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(time, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -492,12 +422,12 @@ class MainActivity : ComponentActivity() {
                 }
                 AnimatedVisibility(visible = status == null) {
                     Button(onClick = onTake, modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
-                        Text("ПРИНЯТЬ")
+                        Text(stringResource(R.string.take))
                     }
                 }
                 AnimatedVisibility(visible = status != null && actual != null) {
                     Text(
-                        "Факт: ${SimpleDateFormat("HH:mm", Locale.US).format(Date(actual ?: 0))}",
+                        stringResource(R.string.fact_time, SimpleDateFormat("HH:mm", Locale.US).format(Date(actual ?: 0))),
                         modifier = Modifier.padding(top = 8.dp),
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -509,9 +439,9 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun StatusPill(status: String?) {
         val text = when (status) {
-            "TAKEN" -> "Принято"
-            "SKIPPED" -> "Пропущено"
-            else -> "Ожидает"
+            "TAKEN" -> stringResource(R.string.status_taken)
+            "SKIPPED" -> stringResource(R.string.status_skipped)
+            else -> stringResource(R.string.status_pending)
         }
         val background = when (status) {
             "TAKEN" -> Color(0xFFDDEFE2)
@@ -523,59 +453,35 @@ class MainActivity : ComponentActivity() {
             "SKIPPED" -> MaterialTheme.colorScheme.error
             else -> MaterialTheme.colorScheme.onSurfaceVariant
         }
-        Surface(
-            color = background,
-            shape = RoundedCornerShape(50),
-            tonalElevation = 0.dp
-        ) {
+        Surface(color = background, shape = RoundedCornerShape(50), tonalElevation = 0.dp) {
             Text(text, color = color, fontWeight = FontWeight.Medium, modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp))
         }
     }
 
     @Composable
-    private fun History(
-        medicines: List<Medicine>,
-        refresh: Int,
-        modifier: Modifier = Modifier
-    ) {
+    private fun History(medicines: List<Medicine>, refresh: Int, modifier: Modifier = Modifier) {
         var month by remember { mutableStateOf(Calendar.getInstance()) }
-        val from = Calendar.getInstance().apply {
-            set(month.get(Calendar.YEAR), month.get(Calendar.MONTH), 1, 0, 0, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val to = Calendar.getInstance().apply {
-            time = from.time
-            set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
-        }
+        val from = Calendar.getInstance().apply { set(month.get(Calendar.YEAR), month.get(Calendar.MONTH), 1, 0, 0, 0); set(Calendar.MILLISECOND, 0) }
+        val to = Calendar.getInstance().apply { time = from.time; set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH)) }
         val records = remember(refresh, month.get(Calendar.YEAR), month.get(Calendar.MONTH), medicines) {
-            db.intakesBetween(Schedule.dateKey(from), Schedule.dateKey(to))
-                .filter { record -> medicines.any { it.id == record.medicineId } }
+            db.intakesBetween(Schedule.dateKey(from), Schedule.dateKey(to)).filter { record -> medicines.any { it.id == record.medicineId } }
         }
-
-        Column(
-            modifier = modifier
-                .widthIn(max = 760.dp)
-                .padding(horizontal = 16.dp)
-        ) {
+        Column(Modifier.widthIn(max = 760.dp).padding(horizontal = 16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 10.dp)) {
-                Text("История", style = MaterialTheme.typography.headlineMedium)
+                Text(stringResource(R.string.history), style = MaterialTheme.typography.headlineMedium)
                 Spacer(Modifier.weight(1f))
                 TextButton(onClick = { month = (month.clone() as Calendar).apply { add(Calendar.MONTH, -1) } }) { Text("‹") }
                 TextButton(onClick = { month = (month.clone() as Calendar).apply { add(Calendar.MONTH, 1) } }) { Text("›") }
             }
-            Text(
-                SimpleDateFormat("LLLL yyyy", Locale("ru")).format(month.time).replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.titleLarge
-            )
+            Text(SimpleDateFormat("LLLL yyyy", currentLocale()).format(month.time).replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(8.dp))
             CalendarLegend()
             Spacer(Modifier.height(8.dp))
             CalendarGrid(month, medicines, records)
             Spacer(Modifier.height(12.dp))
-            Text("Приёмы", style = MaterialTheme.typography.titleLarge)
-            if (records.isEmpty()) {
-                EmptyCard("За выбранный месяц нет отмеченных приёмов.")
-            } else {
+            Text(stringResource(R.string.intakes), style = MaterialTheme.typography.titleLarge)
+            if (records.isEmpty()) EmptyCard(stringResource(R.string.history_empty))
+            else {
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 8.dp, bottom = 24.dp),
@@ -583,7 +489,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     items(records, key = { it.id }) { record ->
                         val medicine = medicines.firstOrNull { it.id == record.medicineId }
-                        HistoryRecordCard(record, medicine?.name ?: "Лекарство")
+                        HistoryRecordCard(record, medicine?.name ?: stringResource(R.string.medicine_fallback))
                     }
                 }
             }
@@ -592,14 +498,10 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun CalendarLegend() {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            LegendItem(Color(0xFFDDEFE2), "Принято")
-            LegendItem(Color(0xFFFFE9B5), "Запланировано")
-            LegendItem(Color(0xFFF8DEDE), "Пропущено")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            LegendItem(Color(0xFFDDEFE2), stringResource(R.string.status_taken))
+            LegendItem(Color(0xFFFFE9B5), stringResource(R.string.planned))
+            LegendItem(Color(0xFFF8DEDE), stringResource(R.string.status_skipped))
         }
     }
 
@@ -615,10 +517,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun HistoryRecordCard(record: Intake, medicineName: String) {
         Card(Modifier.fillMaxWidth()) {
-            Row(
-                Modifier.padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("${record.date} • ${record.plannedTime}", fontWeight = FontWeight.SemiBold)
                     Text(medicineName)
@@ -629,16 +528,12 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun CalendarGrid(
-        month: Calendar,
-        medicines: List<Medicine>,
-        records: List<Intake>
-    ) {
+    private fun CalendarGrid(month: Calendar, medicines: List<Medicine>, records: List<Intake>) {
         val days = Schedule.monthDays(month.get(Calendar.YEAR), month.get(Calendar.MONTH))
         Column {
             Row(Modifier.fillMaxWidth()) {
-                listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс").forEach { day ->
-                    Text(day, Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                listOf(R.string.days_mon, R.string.days_tue, R.string.days_wed, R.string.days_thu, R.string.days_fri, R.string.days_sat, R.string.days_sun).forEach { day ->
+                    Text(stringResource(day), Modifier.weight(1f), fontWeight = FontWeight.Bold)
                 }
             }
             days.chunked(7).forEach { week ->
@@ -655,18 +550,8 @@ class MainActivity : ComponentActivity() {
                             dayRecords.count { it.status == "TAKEN" } == events.size -> Color(0xFFDDEFE2)
                             else -> Color(0xFFFFE9B5)
                         }
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(2.dp)
-                                .background(background, RoundedCornerShape(8.dp))
-                                .padding(vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                day.get(Calendar.DAY_OF_MONTH).toString(),
-                                color = if (inMonth) MaterialTheme.colorScheme.onSurface else Color.LightGray
-                            )
+                        Box(Modifier.weight(1f).padding(2.dp).background(background, RoundedCornerShape(8.dp)).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                            Text(day.get(Calendar.DAY_OF_MONTH).toString(), color = if (inMonth) MaterialTheme.colorScheme.onSurface else Color.LightGray)
                         }
                     }
                 }
@@ -675,50 +560,30 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun Medicines(
-        medicines: List<Medicine>,
-        changed: () -> Unit,
-        onExport: () -> Unit,
-        onImport: () -> Unit,
-        modifier: Modifier = Modifier
-    ) {
+    private fun Medicines(medicines: List<Medicine>, changed: () -> Unit, onExport: () -> Unit, onImport: () -> Unit, modifier: Modifier = Modifier) {
         var editing by remember { mutableStateOf<Medicine?>(null) }
         var deleting by remember { mutableStateOf<Medicine?>(null) }
-
         BoxWithConstraints(modifier = modifier) {
             val horizontal = if (maxWidth >= 600.dp) 28.dp else 16.dp
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .widthIn(max = 900.dp)
-                    .padding(horizontal = horizontal),
+                modifier = Modifier.fillMaxSize().widthIn(max = 900.dp).padding(horizontal = horizontal),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 10.dp, bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Лекарства", style = MaterialTheme.typography.headlineMedium)
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.medicines), style = MaterialTheme.typography.headlineMedium)
                         Spacer(Modifier.weight(1f))
-                        TextButton(onClick = onExport) { Text("Экспорт") }
-                        TextButton(onClick = onImport) { Text("Импорт") }
+                        TextButton(onClick = onExport) { Text(stringResource(R.string.export)) }
+                        TextButton(onClick = onImport) { Text(stringResource(R.string.import)) }
                     }
                 }
-                if (medicines.isEmpty()) {
-                    item { EmptyCard("Добавьте первое лекарство кнопкой +") }
-                }
+                if (medicines.isEmpty()) item { EmptyCard(stringResource(R.string.medicines_empty)) }
                 items(medicines, key = { it.id }) { medicine ->
-                    MedicineCard(
-                        medicine = medicine,
-                        onEdit = { editing = medicine },
-                        onDelete = { deleting = medicine }
-                    )
+                    MedicineCard(medicine, { editing = medicine }, { deleting = medicine })
                 }
             }
         }
-
         editing?.let { medicine ->
             MedicineEditor(
                 existing = medicine,
@@ -734,12 +599,11 @@ class MainActivity : ComponentActivity() {
                 }
             )
         }
-
         deleting?.let { medicine ->
             AlertDialog(
                 onDismissRequest = { deleting = null },
-                title = { Text("Удалить ${medicine.name}?") },
-                text = { Text("История этого лекарства тоже будет удалена.") },
+                title = { Text(stringResource(R.string.delete_medicine_title, medicine.name)) },
+                text = { Text(stringResource(R.string.delete_medicine_body)) },
                 confirmButton = {
                     Button(onClick = {
                         Scheduler.cancelMedicine(this, medicine)
@@ -748,66 +612,46 @@ class MainActivity : ComponentActivity() {
                         refreshWidget()
                         changed()
                         deleting = null
-                    }) { Text("Удалить") }
+                    }) { Text(stringResource(R.string.delete)) }
                 },
-                dismissButton = { TextButton(onClick = { deleting = null }) { Text("Отмена") } }
+                dismissButton = { TextButton(onClick = { deleting = null }) { Text(stringResource(R.string.cancel)) } }
             )
         }
     }
 
     @Composable
-    private fun MedicineCard(
-        medicine: Medicine,
-        onEdit: () -> Unit,
-        onDelete: () -> Unit
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .animateContentSize(),
-            shape = RoundedCornerShape(18.dp)
-        ) {
+    private fun MedicineCard(medicine: Medicine, onEdit: () -> Unit, onDelete: () -> Unit) {
+        Card(Modifier.fillMaxWidth().animateContentSize(), shape = RoundedCornerShape(18.dp)) {
             Column(Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(medicine.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.weight(1f))
-                    if (medicine.asNeeded) {
-                        Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(50)) {
-                            Text("По необходимости", modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp), style = MaterialTheme.typography.labelMedium)
-                        }
+                    if (medicine.asNeeded) Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(50)) {
+                        Text(stringResource(R.string.as_needed), modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp), style = MaterialTheme.typography.labelMedium)
                     }
                 }
                 Spacer(Modifier.height(4.dp))
                 Text("${medicine.dose} ${medicine.unit}")
-                if (!medicine.asNeeded) Text("Время: ${medicine.times.joinToString(", ")}")
-                Text(
-                    "Курс: ${medicine.startDate}" + if (medicine.endDate.isNotBlank()) " — ${medicine.endDate}" else ""
-                )
-                Text("Осталось: ${medicine.stock} • порог: ${medicine.lowStock}")
+                if (!medicine.asNeeded) Text(stringResource(R.string.time_label, medicine.times.joinToString(", ")))
+                Text(stringResource(R.string.course, medicine.startDate, if (medicine.endDate.isNotBlank()) " — ${medicine.endDate}" else ""))
+                Text(stringResource(R.string.remaining_stock, medicine.stock, medicine.lowStock))
                 AnimatedVisibility(medicine.stock <= medicine.lowStock) {
-                    Text("⚠ Осталось мало", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 2.dp))
+                    Text(stringResource(R.string.low_stock), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 2.dp))
                 }
-                if (medicine.note.isNotBlank()) {
-                    Text(medicine.note, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
-                }
+                if (medicine.note.isNotBlank()) Text(medicine.note, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
                 Row {
-                    TextButton(onClick = onEdit) { Text("Изменить") }
-                    TextButton(onClick = onDelete) { Text("Удалить") }
+                    TextButton(onClick = onEdit) { Text(stringResource(R.string.edit)) }
+                    TextButton(onClick = onDelete) { Text(stringResource(R.string.delete)) }
                 }
             }
         }
     }
 
     @Composable
-    private fun MedicineEditor(
-        existing: Medicine?,
-        profile: String,
-        onDismiss: () -> Unit,
-        onSave: (Medicine) -> Unit
-    ) {
+    private fun MedicineEditor(existing: Medicine?, profile: String, onDismiss: () -> Unit, onSave: (Medicine) -> Unit) {
         var name by remember(existing) { mutableStateOf(existing?.name ?: "") }
         var dose by remember(existing) { mutableStateOf(existing?.dose ?: "1") }
-        var unit by remember(existing) { mutableStateOf(existing?.unit ?: "таблетка") }
+        var unit by remember(existing) { mutableStateOf(existing?.unit ?: stringResource(R.string.default_unit)) }
         var times by remember(existing) { mutableStateOf(existing?.times?.joinToString(", ") ?: "08:00") }
         var start by remember(existing) { mutableStateOf(existing?.startDate ?: today()) }
         var end by remember(existing) { mutableStateOf(existing?.endDate ?: "") }
@@ -816,40 +660,23 @@ class MainActivity : ComponentActivity() {
         var low by remember(existing) { mutableStateOf((existing?.lowStock ?: 5).toString()) }
         var asNeeded by remember(existing) { mutableStateOf(existing?.asNeeded ?: false) }
         var error by remember { mutableStateOf("") }
-
-        fun validDate(value: String): Boolean = runCatching {
-            SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }.parse(value)
-        }.isSuccess
-
+        fun validDate(value: String): Boolean = runCatching { SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }.parse(value) }.isSuccess
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(if (existing == null) "Новое лекарство" else "Изменить лекарство") },
+            title = { Text(stringResource(if (existing == null) R.string.new_medicine else R.string.edit_medicine)) },
             text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    OutlinedTextField(name, { name = it }, label = { Text("Название") }, singleLine = true)
-                    OutlinedTextField(dose, { dose = it }, label = { Text("Доза") }, singleLine = true)
-                    OutlinedTextField(unit, { unit = it }, label = { Text("Единица") }, singleLine = true)
-                    OutlinedTextField(
-                        times,
-                        { times = it },
-                        label = { Text("Время: 08:00, 20:00") },
-                        enabled = !asNeeded,
-                        singleLine = true
-                    )
-                    OutlinedTextField(start, { start = it }, label = { Text("Начало YYYY-MM-DD") }, singleLine = true)
-                    OutlinedTextField(end, { end = it }, label = { Text("Конец YYYY-MM-DD") }, singleLine = true)
-                    OutlinedTextField(stock, { stock = it.filter(Char::isDigit) }, label = { Text("Запас") }, singleLine = true)
-                    OutlinedTextField(low, { low = it.filter(Char::isDigit) }, label = { Text("Порог") }, singleLine = true)
-                    OutlinedTextField(note, { note = it }, label = { Text("Заметка") })
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("По необходимости")
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.name)) }, singleLine = true)
+                    OutlinedTextField(dose, { dose = it }, label = { Text(stringResource(R.string.dose)) }, singleLine = true)
+                    OutlinedTextField(unit, { unit = it }, label = { Text(stringResource(R.string.unit)) }, singleLine = true)
+                    OutlinedTextField(times, { times = it }, label = { Text(stringResource(R.string.time_example)) }, enabled = !asNeeded, singleLine = true)
+                    OutlinedTextField(start, { start = it }, label = { Text(stringResource(R.string.start_date)) }, singleLine = true)
+                    OutlinedTextField(end, { end = it }, label = { Text(stringResource(R.string.end_date)) }, singleLine = true)
+                    OutlinedTextField(stock, { stock = it.filter(Char::isDigit) }, label = { Text(stringResource(R.string.stock)) }, singleLine = true)
+                    OutlinedTextField(low, { low = it.filter(Char::isDigit) }, label = { Text(stringResource(R.string.low_stock_threshold)) }, singleLine = true)
+                    OutlinedTextField(note, { note = it }, label = { Text(stringResource(R.string.note)) })
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.as_needed))
                         Switch(checked = asNeeded, onCheckedChange = { asNeeded = it })
                     }
                     if (error.isNotBlank()) Text(error, color = MaterialTheme.colorScheme.error)
@@ -859,87 +686,53 @@ class MainActivity : ComponentActivity() {
                 Button(enabled = name.isNotBlank(), onClick = {
                     val parsedTimes = times.split(",").map(String::trim).filter(Schedule::validTime).distinct().sorted()
                     when {
-                        !asNeeded && parsedTimes.isEmpty() -> error = "Введите хотя бы одно время в формате ЧЧ:ММ"
-                        !validDate(start) -> error = "Дата начала: YYYY-MM-DD"
-                        end.isNotBlank() && !validDate(end) -> error = "Дата окончания: YYYY-MM-DD"
-                        end.isNotBlank() && end < start -> error = "Дата окончания раньше даты начала"
-                        else -> onSave(
-                            Medicine(
-                                id = existing?.id ?: 0L,
-                                name = name.trim(),
-                                dose = dose.trim(),
-                                unit = unit.trim(),
-                                times = if (asNeeded) emptyList() else parsedTimes,
-                                startDate = start.trim(),
-                                endDate = end.trim(),
-                                note = note.trim(),
-                                stock = stock.toIntOrNull() ?: 0,
-                                lowStock = low.toIntOrNull() ?: 0,
-                                asNeeded = asNeeded,
-                                profile = profile
-                            )
-                        )
+                        !asNeeded && parsedTimes.isEmpty() -> error = getString(R.string.invalid_time)
+                        !validDate(start) -> error = getString(R.string.invalid_start_date)
+                        end.isNotBlank() && !validDate(end) -> error = getString(R.string.invalid_end_date)
+                        end.isNotBlank() && end < start -> error = getString(R.string.end_before_start)
+                        else -> onSave(Medicine(existing?.id ?: 0L, name.trim(), dose.trim(), unit.trim(), if (asNeeded) emptyList() else parsedTimes, start.trim(), end.trim(), note.trim(), stock.toIntOrNull() ?: 0, low.toIntOrNull() ?: 0, asNeeded, profile))
                     }
-                }) { Text("Сохранить") }
+                }) { Text(stringResource(R.string.save)) }
             },
-            dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
+            dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
         )
     }
 
     @Composable
-    private fun ProfileDialog(
-        current: String,
-        onSelect: (String) -> Unit,
-        onAdd: (String) -> Unit,
-        onDelete: (String) -> Unit
-    ) {
+    private fun ProfileDialog(current: String, onSelect: (String) -> Unit, onAdd: (String) -> Unit, onDelete: (String) -> Unit) {
         var newProfile by remember { mutableStateOf("") }
         var deleteTarget by remember { mutableStateOf<String?>(null) }
         val profiles = db.profiles()
-
         if (deleteTarget != null) {
             val target = deleteTarget!!
             AlertDialog(
                 onDismissRequest = { deleteTarget = null },
-                title = { Text("Удалить профиль?") },
-                text = { Text("Профиль «$target» и его выбор будут удалены. Лекарства этого профиля останутся в базе данных.") },
-                confirmButton = {
-                    Button(onClick = { onDelete(target); deleteTarget = null }) { Text("Удалить") }
-                },
-                dismissButton = { TextButton(onClick = { deleteTarget = null }) { Text("Отмена") } }
+                title = { Text(stringResource(R.string.delete_profile_title)) },
+                text = { Text(stringResource(R.string.delete_profile_body, Localization.profileDisplayName(this@MainActivity, target))) },
+                confirmButton = { Button(onClick = { onDelete(target); deleteTarget = null }) { Text(stringResource(R.string.delete)) } },
+                dismissButton = { TextButton(onClick = { deleteTarget = null }) { Text(stringResource(R.string.cancel)) } }
             )
         }
-
         AlertDialog(
             onDismissRequest = { onSelect(current) },
-            title = { Text("Профиль") },
+            title = { Text(stringResource(R.string.profile)) },
             text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     profiles.forEach { profile ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             TextButton(onClick = { onSelect(profile) }, modifier = Modifier.weight(1f)) {
-                                Text(if (profile == current) "✓ $profile" else profile)
+                                val display = Localization.profileDisplayName(this@MainActivity, profile)
+                                Text(if (profile == current) "✓ $display" else display)
                             }
-                            if (profile != "Я") {
-                                TextButton(onClick = { deleteTarget = profile }) { Text("Удалить") }
-                            }
+                            if (profile != "Я") TextButton(onClick = { deleteTarget = profile }) { Text(stringResource(R.string.delete)) }
                         }
                     }
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
-                    OutlinedTextField(newProfile, { newProfile = it }, label = { Text("Новый профиль") }, singleLine = true)
-                    TextButton(
-                        enabled = newProfile.isNotBlank(),
-                        onClick = {
-                            onAdd(newProfile.trim())
-                            newProfile = ""
-                        }
-                    ) { Text("Добавить и выбрать") }
+                    HorizontalDivider(Modifier.padding(vertical = 6.dp))
+                    OutlinedTextField(newProfile, { newProfile = it }, label = { Text(stringResource(R.string.new_profile)) }, singleLine = true)
+                    TextButton(enabled = newProfile.isNotBlank(), onClick = { onAdd(newProfile.trim()); newProfile = "" }) { Text(stringResource(R.string.add_and_select)) }
                 }
             },
-            confirmButton = { TextButton(onClick = { onSelect(current) }) { Text("Готово") } }
+            confirmButton = { TextButton(onClick = { onSelect(current) }) { Text(stringResource(R.string.done)) } }
         )
     }
 
@@ -947,45 +740,52 @@ class MainActivity : ComponentActivity() {
     private fun SettingsDialog(
         darkMode: Boolean,
         onDarkModeChanged: (Boolean) -> Unit,
+        language: String,
+        onLanguageChanged: (String) -> Unit,
         onDismiss: () -> Unit
     ) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Настройки") },
+            title = { Text(stringResource(R.string.settings)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text("Тёмная тема", fontWeight = FontWeight.Medium)
-                            Text("Запоминается между запусками", style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(R.string.dark_theme), fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.dark_theme_summary), style = MaterialTheme.typography.bodySmall)
                         }
                         Switch(checked = darkMode, onCheckedChange = onDarkModeChanged)
                     }
                     HorizontalDivider()
-                    Text("Уведомления", fontWeight = FontWeight.Medium)
-                    Text("Напоминания и точное расписание управляются системными разрешениями Android.", style = MaterialTheme.typography.bodySmall)
-                    OutlinedButton(
-                        onClick = {
-                            runCatching { startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply { putExtra(Settings.EXTRA_APP_PACKAGE, packageName) }) }
-                        }
-                    ) { Text("Открыть настройки уведомлений") }
-                    if (Build.VERSION.SDK_INT >= 31) {
-                        OutlinedButton(
-                            onClick = {
-                                runCatching {
-                                    startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")))
-                                }
-                            }
-                        ) { Text("Настроить точные будильники") }
+                    Text(stringResource(R.string.language), fontWeight = FontWeight.Medium)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { onLanguageChanged(Localization.SYSTEM) }) { Text(stringResource(R.string.system_default)) }
+                        OutlinedButton(onClick = { onLanguageChanged(Localization.RUSSIAN) }) { Text(stringResource(R.string.russian)) }
+                        OutlinedButton(onClick = { onLanguageChanged(Localization.ENGLISH) }) { Text(stringResource(R.string.english)) }
                     }
-                    Text("DoseBloom 1.3.0", style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        when (language) {
+                            Localization.RUSSIAN -> stringResource(R.string.russian)
+                            Localization.ENGLISH -> stringResource(R.string.english)
+                            else -> stringResource(R.string.system_default)
+                        },
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    HorizontalDivider()
+                    Text(stringResource(R.string.notifications), fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.notification_settings_summary), style = MaterialTheme.typography.bodySmall)
+                    OutlinedButton(onClick = {
+                        runCatching { startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply { putExtra(Settings.EXTRA_APP_PACKAGE, packageName) }) }
+                    }) { Text(stringResource(R.string.open_notification_settings)) }
+                    if (Build.VERSION.SDK_INT >= 31) {
+                        OutlinedButton(onClick = {
+                            runCatching { startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName"))) }
+                        }) { Text(stringResource(R.string.exact_alarm_settings)) }
+                    }
+                    Text("DoseBloom 1.4.0", style = MaterialTheme.typography.labelSmall)
                 }
             },
-            confirmButton = { TextButton(onClick = onDismiss) { Text("Готово") } }
+            confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.done)) } }
         )
     }
 
