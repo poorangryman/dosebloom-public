@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DoseBloom</string>
+    <string name="notification_channel_name">DoseBloom reminders</string>
+    <string name="today">Today</string><string name="history">History</string><string name="medicines">Medications</string>
+    <string name="today_calm_title">Nothing scheduled for today</string><string name="today_calm_body">There are no scheduled doses. If a medication is taken as needed, you can record it from the Medications screen.</string>
+    <string name="today_completed_title">All doses completed</string><string name="today_completed_body">There is nothing else scheduled for today.</string>
+    <string name="take">TAKE</string><string name="fact_time">Actual: %1$s</string><string name="status_taken">Taken</string><string name="status_skipped">Skipped</string><string name="status_pending">Pending</string>
+    <string name="intakes">Doses</string><string name="history_empty">There are no recorded doses for the selected month.</string><string name="medicine_fallback">Medication</string><string name="planned">Scheduled</string>
+    <string name="days_mon">Mon</string><string name="days_tue">Tue</string><string name="days_wed">Wed</string><string name="days_thu">Thu</string><string name="days_fri">Fri</string><string name="days_sat">Sat</string><string name="days_sun">Sun</string>
+    <string name="export">Export</string><string name="import">Import</string><string name="medicines_empty">Add your first medication with the + button</string>
+    <string name="delete_medicine_title">Delete %1$s?</string><string name="delete_medicine_body">The history for this medication will also be deleted.</string><string name="delete">Delete</string><string name="cancel">Cancel</string>
+    <string name="as_needed">As needed</string><string name="time_label">Time: %1$s</string><string name="course">Course: %1$s%2$s</string><string name="remaining_stock">Remaining: %1$d • threshold: %2$d</string><string name="low_stock">⚠ Low supply</string><string name="edit">Edit</string>
+    <string name="new_medicine">New medication</string><string name="edit_medicine">Edit medication</string><string name="name">Name</string><string name="dose">Dose</string><string name="unit">Unit</string>
+    <string name="time_example">Time: 08:00, 20:00</string><string name="start_date">Start YYYY-MM-DD</string><string name="end_date">End YYYY-MM-DD</string><string name="stock">Supply</string><string name="low_stock_threshold">Threshold</string><string name="note">Note</string>
+    <string name="invalid_time">Enter at least one time in HH:MM format</string><string name="invalid_start_date">Start date: YYYY-MM-DD</string><string name="invalid_end_date">End date: YYYY-MM-DD</string><string name="end_before_start">End date is before the start date</string><string name="save">Save</string>
+    <string name="delete_profile_title">Delete profile?</string><string name="delete_profile_body">Profile “%1$s” and its selection will be removed. Medications belonging to this profile will remain in the database.</string><string name="profile">Profile</string><string name="new_profile">New profile</string><string name="add_and_select">Add and select</string><string name="done">Done</string>
+    <string name="settings">Settings</string><string name="dark_theme">Dark theme</string><string name="dark_theme_summary">Remembered between launches</string><string name="notifications">Notifications</string><string name="notification_settings_summary">Reminders and exact scheduling are controlled by Android system permissions.</string>
+    <string name="open_notification_settings">Open notification settings</string><string name="exact_alarm_settings">Configure exact alarms</string><string name="language">Language</string><string name="system_default">System default</string><string name="russian">Русский</string><string name="english">English</string>
+    <string name="default_profile">Me</string><string name="default_unit">tablet</string><string name="next_dose">Next dose</string><string name="no_upcoming_doses">No upcoming doses</string>
+    <string name="notification_title">DoseBloom • time for a dose</string><string name="notification_taken">TAKEN</string><string name="notification_postpone">+10 MIN</string><string name="notification_skip">SKIP</string>
+</resources>
