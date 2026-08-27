@@ -10,6 +10,7 @@ class NextDoseWidget : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
         ids.forEach { update(context, manager, it) }
     }
+
     companion object {
         fun update(context: Context, manager: AppWidgetManager, id: Int) {
             val db = Db(context)
@@ -36,10 +37,10 @@ class NextDoseWidget : AppWidgetProvider() {
             }
             val views = RemoteViews(context.packageName, R.layout.widget_next_dose)
             if (found == null) {
-                views.setTextViewText(R.id.widget_title, "DoseBloom")
-                views.setTextViewText(R.id.widget_body, "Нет ближайших приёмов")
+                views.setTextViewText(R.id.widget_title, context.getString(R.string.app_name))
+                views.setTextViewText(R.id.widget_body, context.getString(R.string.no_upcoming_doses))
             } else {
-                views.setTextViewText(R.id.widget_title, "Следующий приём")
+                views.setTextViewText(R.id.widget_title, context.getString(R.string.next_dose))
                 views.setTextViewText(R.id.widget_body, "${found!!.second} • ${found!!.first.name}")
             }
             manager.updateAppWidget(id, views)
