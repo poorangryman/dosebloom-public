@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.DoseBloom" parent="android:style/Theme.Material.Light.NoActionBar">
+    <style name="Theme.DoseBloom" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#426B55</item>
         <item name="android:navigationBarColor">#F8F7F4</item>
