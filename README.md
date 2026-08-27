@@ -29,6 +29,8 @@ The main idea is simple: create medication schedules, record doses, and use remi
 - Local data storage
 - Dark theme
 - Settings for notification and exact-alarm permissions
+- **Russian and English language support**
+- In-app language selection with a system-default option
 - No mandatory account or cloud service
 - No advertising
 
