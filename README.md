@@ -101,7 +101,7 @@ The widget searches for the nearest scheduled dose within the next seven days an
 
 Open the project in Android Studio and allow Gradle to synchronize the project.
 
-For a release build, use the Gradle `assembleRelease` task or the corresponding Android Studio build option. The repository also contains a GitHub Actions workflow that can build a release APK automatically.
+For a release build, use the Gradle `assembleRelease` task or the corresponding Android Studio build option. The repository also contains a GitHub Actions workflow that builds and verifies a release APK automatically on repository changes.
 
 The production signing key is intentionally not included in this repository. If you need to update an existing installation that was signed with the original release key, you must use the same signing key when creating the release.
 
