@@ -11,6 +11,9 @@ permissions:
 env:
   APK_NAME: DoseBloom-release.apk
 
+env:
+  APK_NAME: DoseBloom-release.apk
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,8 +29,10 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Set up Gradle
+      - name: Set up Gradle 9.5.1
         uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.5.1'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
@@ -85,7 +90,7 @@ jobs:
           EOF
 
       - name: Build release APK
-        run: ./gradlew --no-daemon assembleRelease
+        run: gradle --no-daemon assembleRelease
 
       - name: Verify APK signature
         run: |
