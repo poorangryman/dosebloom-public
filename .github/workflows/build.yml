@@ -28,15 +28,15 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
 
-      - name: Refresh Android SDK package index
+      - name: Install required Android SDK packages
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager --update
-
-      - name: Install Android SDK Platform 37 and Build Tools
-        run: |
-          sdkmanager "platforms;android-37" "build-tools;36.0.0"
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager --channel=0 --install "platforms;android-37" "build-tools;36.0.0"
+          test -d "$ANDROID_HOME/platforms/android-37"
+          test -x "$ANDROID_HOME/build-tools/36.0.0/apksigner"
 
       - name: Decode release keystore
         env:
