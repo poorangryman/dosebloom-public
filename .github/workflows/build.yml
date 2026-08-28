@@ -28,14 +28,15 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
-        with:
-          packages: ''
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
+      - name: Refresh Android SDK package index
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --update
 
-      - name: Install Android Build Tools
-        run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
+      - name: Install Android SDK Platform 37 and Build Tools
+        run: |
+          sdkmanager "platforms;android-37" "build-tools;36.0.0"
 
       - name: Decode release keystore
         env:
