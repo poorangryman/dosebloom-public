@@ -44,11 +44,28 @@ jobs:
           python3 - <<'PY'
           import base64
           import os
+          import re
 
-          data = "".join(os.environ["KEYSTORE_BASE64"].split())
+          raw = os.environ.get("KEYSTORE_BASE64", "")
+          if not raw.strip():
+              raise SystemExit("DOSEBLOOM_KEYSTORE_BASE64 is empty or missing")
+
+          # Accept normal base64 pasted with whitespace, quotes, or a UTF-8 BOM.
+          # Keep only the base64 alphabet so harmless formatting cannot break decoding.
+          data = re.sub(r"[^A-Za-z0-9+/=]", "", raw)
+          if not data:
+              raise SystemExit("DOSEBLOOM_KEYSTORE_BASE64 contains no base64 data")
+          if len(data) % 4:
+              data += "=" * (4 - len(data) % 4)
+
+          try:
+              decoded = base64.b64decode(data, validate=True)
+          except Exception as exc:
+              raise SystemExit(f"Invalid DOSEBLOOM_KEYSTORE_BASE64: {exc}")
+
           keystore_path = os.path.join(os.environ["RUNNER_TEMP"], "dosebloom-release.jks")
           with open(keystore_path, "wb") as f:
-              f.write(base64.b64decode(data, validate=True))
+              f.write(decoded)
           print("Keystore decoded successfully")
           PY
 
@@ -72,6 +89,7 @@ jobs:
       - name: Verify APK signature
         run: |
           APK=$(find app/build/outputs/apk/release -name '*.apk' -type f | head -n 1)
+          test -n "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
 
       - name: Show APK certificate
