@@ -33,9 +33,8 @@ jobs:
 
       - name: Install required Android SDK packages
         run: |
-          yes | sdkmanager --licenses >/dev/null 2>&1 || true
-          sdkmanager --channel=0 --install "platforms;android-37" "build-tools;36.0.0"
-          test -d "$ANDROID_HOME/platforms/android-37"
+          sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
+          test -d "$ANDROID_HOME/platforms/android-37.0"
           test -x "$ANDROID_HOME/build-tools/36.0.0/apksigner"
 
       - name: Decode release keystore
