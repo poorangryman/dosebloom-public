@@ -14,7 +14,7 @@ I'm publishing the project openly because I thought it might be useful to someon
 
 ## Current version
 
-**1.4.3** (`versionCode 11`)
+**1.4.4** (`versionCode 12`)
 
 `applicationId`: `com.dosebloom.app`
 
@@ -97,15 +97,17 @@ The widget searches for the nearest scheduled dose within the next seven days an
 - Android Gradle Plugin 8.7.3
 - Gradle 8.9
 
-## Building
+## Building and releases
 
 Open the project in Android Studio and allow Gradle to synchronize the project.
 
-For a release build, use the Gradle `assembleRelease` task or the corresponding Android Studio build option. The repository also contains a GitHub Actions workflow that builds and verifies a release APK automatically on repository changes.
+The public repository uses GitHub Actions to build the signed release APK. The production signing key is **not stored in the repository**. GitHub Actions restores it temporarily from protected repository secrets during a release build and removes the temporary signing files after the build.
 
-The production signing key is intentionally not included in this repository. If you need to update an existing installation that was signed with the original release key, you must use the same signing key when creating the release.
+The workflow also verifies the APK signature with Android `apksigner`, uploads the signed APK as an artifact, and publishes a GitHub Release using the version from `app/build.gradle.kts`.
 
-The private repository uses the production signing configuration through protected GitHub Actions secrets. This public repository does not contain the release keystore or signing passwords.
+The signing key must remain unchanged for future releases. This is required so that Android accepts future APKs as updates to existing installations.
+
+The repository does not contain the release keystore or signing passwords.
 
 ## Privacy and data
 
@@ -121,13 +123,15 @@ Exported JSON files may contain sensitive medication information. Store exported
 
 ## Versioning rule
 
-For every code change in the project:
+For every code change:
 
 1. increment `versionName` and `versionCode`;
-2. update the README in the private repository;
-3. synchronize the code changes with `dosebloom-public`;
-4. update the public README to the same version;
-5. check the GitHub Actions release build.
+2. update this README to the same version;
+3. run the GitHub Actions release build;
+4. verify the APK signature;
+5. publish the GitHub Release.
+
+The production signing key must never be committed to the repository.
 
 ## Why does it exist?
 
