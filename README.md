@@ -12,6 +12,16 @@ I relied **heavily on ChatGPT throughout the development process** — from the 
 
 I'm publishing the project openly because I thought it might be useful to someone else as well. I'm also hoping that people with more experience can help me improve it.
 
+## Current version
+
+**1.4.2** (`versionCode 10`)
+
+`applicationId`: `com.dosebloom.app`
+
+Minimum Android version: **API 26 (Android 8.0)**  
+Target SDK: **35**  
+Compile SDK: **35**
+
 ## What is DoseBloom?
 
 DoseBloom is a lightweight Android application for tracking medications and scheduled doses locally on your device.
@@ -20,21 +30,97 @@ The main idea is simple: create medication schedules, record doses, and use remi
 
 ### Features
 
-- Create and manage medication profiles and schedules
-- Track today's doses and review medication history
-- Notifications and scheduled reminders for upcoming doses
-- Home-screen widget for quick access to medication information
-- JSON data export and import
+- Create and manage medication schedules
+- Track today's doses and review medication history with a calendar
+- Record taken and skipped doses
+- Medication courses with start and end dates
+- As-needed medications
+- Medication stock tracking and low-stock warnings
 - Multiple user profiles
-- Local data storage
-- Dark theme
-- Settings for notification and exact-alarm permissions
-- **Russian and English language support**
+- Notifications and scheduled reminders
+- Notification actions: **Taken**, **+10 min**, and **Skip**
+- Automatic schedule restoration after device reboot and time/time-zone changes
+- Home-screen widget showing the next scheduled dose
+- JSON data export and import
+- Light and dark theme
+- Russian and English language support
 - In-app language selection with a system-default option
 - No mandatory account or cloud service
 - No advertising
 
 DoseBloom is a personal tracking tool and **is not a substitute for medical advice, diagnosis, or professional healthcare**. Always follow the instructions provided by your doctor or medication packaging.
+
+## Export and import
+
+DoseBloom can export application data to JSON and restore it through the Android system file picker.
+
+The current export format includes:
+
+- user profiles;
+- medications;
+- dosage and units;
+- schedules;
+- course dates;
+- notes;
+- stock and low-stock threshold;
+- as-needed status.
+
+**The current 1.4.2 export implementation does not yet include the history of actual medication intakes.** This is a known limitation and is planned as a separate improvement.
+
+## Reminders and exact alarms
+
+DoseBloom uses Android `AlarmManager` for scheduled reminders. It attempts to use exact alarms when the required system access is available and falls back to a non-exact alarm when it is not.
+
+On Android 12 and newer, exact alarms require the system's **Alarms & reminders** access. Depending on the Android version and installation state, this access may need to be enabled manually for the most precise reminders.
+
+The application recreates its schedule after device reboot and after time or time-zone changes.
+
+## Widget
+
+DoseBloom includes a home-screen widget that displays the next scheduled dose.
+
+The widget searches for the nearest scheduled dose within the next seven days.
+
+**Known limitation:** the current widget implementation searches across all profiles rather than restricting the result to the profile currently selected in the app.
+
+## Technology
+
+- Kotlin 2.0.21
+- Jetpack Compose
+- Material 3
+- AndroidX
+- SQLite via `SQLiteOpenHelper`
+- Android `AlarmManager` and `BroadcastReceiver`
+- Android App Widgets
+- JSON export/import
+- Java 17
+- Android Gradle Plugin 8.7.3
+- Gradle 8.9
+
+## Building
+
+Open the project in Android Studio and allow Gradle to synchronize the project.
+
+For a release build, use the Gradle `assembleRelease` task or the corresponding Android Studio build option. The repository also contains a GitHub Actions workflow that can build a release APK automatically.
+
+The production signing key is intentionally not included in this repository. If you need to update an existing installation that was signed with the original release key, you must use the same signing key when creating the release.
+
+The private repository uses the production signing configuration through protected GitHub Actions secrets. This public repository does not contain the release keystore or signing passwords.
+
+## Privacy and data
+
+DoseBloom is designed around local data storage. The application does not require an account or mandatory cloud synchronization.
+
+Exported JSON files may contain sensitive medication information. Store exported files securely and do not share them publicly unless you are comfortable disclosing their contents.
+
+## Known tasks for the current version
+
+1. Add actual intake history to JSON export/import.
+2. Synchronize the CI artifact name with the actual application version.
+3. Update the remaining legacy build/update documentation that still describes version 1.3.0.
+4. Make the home-screen widget respect the currently selected profile.
+5. Add automated tests for the database, import/export, scheduling, and notification handling.
+6. Continue improving the dark-theme coverage for fixed semantic colors used by status and calendar elements.
 
 ## Why does it exist?
 
@@ -46,7 +132,6 @@ DoseBloom started as a personal project and gradually grew into a complete Andro
 
 If you use DoseBloom, **feedback, bug reports, feature requests, and contributions are welcome**.
 
-- [Report a bug or discuss DoseBloom](https://github.com/poorangryman/dosebloom-public/issues/1)
 - [Open a new issue](https://github.com/poorangryman/dosebloom-public/issues/new)
 
 For bug reports, please include your Android version, device model, DoseBloom version, steps to reproduce the problem, and screenshots or logs when possible.
@@ -65,28 +150,6 @@ I'm publishing the source code openly because I believe that sharing a real, imp
 
 If you're an experienced Android developer and notice something that could be significantly improved, constructive feedback is welcome.
 
-**I'm also very open to suggestions and contributions from the community.** If you have ideas for new features, improvements, bug fixes, UI/UX changes, or anything else that could make DoseBloom better, feel free to share them.
-
-If you have experience with Android development, Kotlin/Java, UI/UX, testing, security, architecture, notifications, or any other area relevant to the project, **any help, advice, constructive criticism, or contribution would be greatly appreciated.** I'm still learning, so there is definitely a lot I can improve.
-
-## Building
-
-Open the project in Android Studio and allow Gradle to synchronize the project.
-
-For a release build, use the Gradle `assembleRelease` task or the corresponding Android Studio build option. The repository also contains a GitHub Actions workflow that can build a release APK automatically.
-
-The production signing key is intentionally not included in this repository. If you need to update an existing installation that was signed with the original release key, you must use the same signing key when creating the release.
-
-## Privacy and data
-
-DoseBloom is designed around local data storage. The application does not require an account or mandatory cloud synchronization.
-
-Exported JSON files may contain sensitive medication information. Store exported files securely and do not share them publicly unless you are comfortable disclosing their contents.
-
 ## License
 
 See [LICENSE](LICENSE).
-
-## A note about this README
-
-**I also used ChatGPT to write and polish this README.** My English isn't good enough to express all of this clearly and naturally on my own, so I relied on ChatGPT to help translate and formulate my thoughts. The ideas and information about the project are mine; ChatGPT helped me put them into proper English.
