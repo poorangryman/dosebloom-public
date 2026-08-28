@@ -26,10 +26,8 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Set up Gradle 9.5
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: '9.5'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
@@ -87,7 +85,7 @@ jobs:
           EOF
 
       - name: Build release APK
-        run: gradle --no-daemon assembleRelease
+        run: ./gradlew --no-daemon assembleRelease
 
       - name: Verify APK signature
         run: |
