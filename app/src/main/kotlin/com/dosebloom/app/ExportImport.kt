@@ -28,6 +28,18 @@ object ExportImport {
                 })
             }
         })
+        root.put("intakes", JSONArray().apply {
+            db.intakesBetween("0000-01-01", "9999-12-31").forEach { intake ->
+                put(JSONObject().apply {
+                    put("id", intake.id)
+                    put("medicineId", intake.medicineId)
+                    put("date", intake.date)
+                    put("plannedTime", intake.plannedTime)
+                    put("actualMillis", intake.actualMillis)
+                    put("status", intake.status)
+                })
+            }
+        })
         context.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(root.toString(2)) }
     }
 
