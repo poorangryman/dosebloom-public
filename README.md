@@ -14,7 +14,7 @@ I'm publishing the project openly because I thought it might be useful to someon
 
 ## Current version
 
-**1.4.2** (`versionCode 10`)
+**1.4.3** (`versionCode 11`)
 
 `applicationId`: `com.dosebloom.app`
 
@@ -40,9 +40,10 @@ The main idea is simple: create medication schedules, record doses, and use remi
 - Notifications and scheduled reminders
 - Notification actions: **Taken**, **+10 min**, and **Skip**
 - Automatic schedule restoration after device reboot and time/time-zone changes
-- Home-screen widget showing the next scheduled dose
-- JSON data export and import
-- Light and dark theme
+- Home-screen widget showing the next scheduled dose for the active profile
+- JSON data export and import, including actual intake history
+- Light and dark theme with adapted semantic status and calendar colors
+- Scrollable medication add/edit form for small screens
 - Russian and English language support
 - In-app language selection with a system-default option
 - No mandatory account or cloud service
@@ -54,7 +55,7 @@ DoseBloom is a personal tracking tool and **is not a substitute for medical advi
 
 DoseBloom can export application data to JSON and restore it through the Android system file picker.
 
-The current export format includes:
+The export format includes:
 
 - user profiles;
 - medications;
@@ -63,9 +64,10 @@ The current export format includes:
 - course dates;
 - notes;
 - stock and low-stock threshold;
-- as-needed status.
+- as-needed status;
+- actual intake history, including date, planned time, actual time, and status.
 
-**The current 1.4.2 export implementation does not yet include the history of actual medication intakes.** This is a known limitation and is planned as a separate improvement.
+Older JSON files without the `intakes` field remain compatible; they simply do not contain intake history to restore.
 
 ## Reminders and exact alarms
 
@@ -79,9 +81,7 @@ The application recreates its schedule after device reboot and after time or tim
 
 DoseBloom includes a home-screen widget that displays the next scheduled dose.
 
-The widget searches for the nearest scheduled dose within the next seven days.
-
-**Known limitation:** the current widget implementation searches across all profiles rather than restricting the result to the profile currently selected in the app.
+The widget searches for the nearest scheduled dose within the next seven days and uses the profile currently selected in the application.
 
 ## Technology
 
@@ -115,12 +115,19 @@ Exported JSON files may contain sensitive medication information. Store exported
 
 ## Known tasks for the current version
 
-1. Add actual intake history to JSON export/import.
-2. Synchronize the CI artifact name with the actual application version.
-3. Update the remaining legacy build/update documentation that still describes version 1.3.0.
-4. Make the home-screen widget respect the currently selected profile.
-5. Add automated tests for the database, import/export, scheduling, and notification handling.
-6. Continue improving the dark-theme coverage for fixed semantic colors used by status and calendar elements.
+1. Update the Android/Compose/Kotlin/Gradle stack as a separate technical change after verifying compatibility.
+2. Add automated tests for the database, import/export, scheduling, and notification handling.
+3. Continue improving the application based on testing and feedback.
+
+## Versioning rule
+
+For every code change in the project:
+
+1. increment `versionName` and `versionCode`;
+2. update the README in the private repository;
+3. synchronize the code changes with `dosebloom-public`;
+4. update the public README to the same version;
+5. check the GitHub Actions release build.
 
 ## Why does it exist?
 
