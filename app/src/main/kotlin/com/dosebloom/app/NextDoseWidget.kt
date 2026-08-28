@@ -14,7 +14,9 @@ class NextDoseWidget : AppWidgetProvider() {
     companion object {
         fun update(context: Context, manager: AppWidgetManager, id: Int) {
             val db = Db(context)
-            val meds = db.medicines()
+            val activeProfile = context.getSharedPreferences("MainActivity", Context.MODE_PRIVATE)
+                .getString("selected_profile", "Я") ?: "Я"
+            val meds = db.medicines().filter { it.profile == activeProfile }
             val now = Calendar.getInstance()
             var found: Pair<Medicine, String>? = null
             var foundMillis = Long.MAX_VALUE
