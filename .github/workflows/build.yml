@@ -29,13 +29,13 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Set up Gradle 8.9
+      - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
+          gradle-version: '9.3.1'
 
       - name: Install Android Build Tools
-        run: sdkmanager "build-tools;35.0.0"
+        run: sdkmanager "build-tools;36.0.0"
 
       - name: Decode release keystore
         env:
@@ -50,8 +50,6 @@ jobs:
           if not raw.strip():
               raise SystemExit("DOSEBLOOM_KEYSTORE_BASE64 is empty or missing")
 
-          # Accept normal base64 pasted with whitespace, quotes, or a UTF-8 BOM.
-          # Keep only the base64 alphabet so harmless formatting cannot break decoding.
           data = re.sub(r"[^A-Za-z0-9+/=]", "", raw)
           if not data:
               raise SystemExit("DOSEBLOOM_KEYSTORE_BASE64 contains no base64 data")
@@ -90,12 +88,12 @@ jobs:
         run: |
           APK=$(find app/build/outputs/apk/release -name '*.apk' -type f | head -n 1)
           test -n "$APK"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK"
 
       - name: Show APK certificate
         run: |
           APK=$(find app/build/outputs/apk/release -name '*.apk' -type f | head -n 1)
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$APK"
 
       - name: Prepare release metadata
         id: meta
