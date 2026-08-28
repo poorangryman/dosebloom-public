@@ -19,8 +19,8 @@ I'm publishing the project openly because I thought it might be useful to someon
 `applicationId`: `com.dosebloom.app`
 
 Minimum Android version: **API 26 (Android 8.0)**  
-Target SDK: **35**  
-Compile SDK: **35**
+Target SDK: **37**  
+Compile SDK: **37**
 
 ## What is DoseBloom?
 
@@ -85,17 +85,24 @@ The widget searches for the nearest scheduled dose within the next seven days an
 
 ## Technology
 
-- Kotlin 2.0.21
-- Jetpack Compose
-- Material 3
-- AndroidX
+- Kotlin 2.4.0
+- Jetpack Compose 1.12.0 via Compose BOM 2026.08.00
+- Material 3 1.4.0
+- AndroidX Core KTX 1.19.0
+- AndroidX AppCompat 1.8.0
+- AndroidX Activity Compose 1.13.0
+- AndroidX Lifecycle 2.11.0
 - SQLite via `SQLiteOpenHelper`
 - Android `AlarmManager` and `BroadcastReceiver`
 - Android App Widgets
 - JSON export/import
 - Java 17
-- Android Gradle Plugin 8.7.3
-- Gradle 8.9
+- Android Gradle Plugin 9.1.1
+- Gradle 9.3.1
+- Android Build Tools 36.0.0
+- Compile/Target SDK 37
+
+Compose dependencies are managed with the official Compose BOM so Compose libraries remain aligned with each other. The Kotlin Compose compiler plugin is kept aligned with the Kotlin version.
 
 ## Building and releases
 
@@ -117,19 +124,20 @@ Exported JSON files may contain sensitive medication information. Store exported
 
 ## Known tasks for the current version
 
-1. Update the Android/Compose/Kotlin/Gradle stack as a separate technical change after verifying compatibility.
-2. Add automated tests for the database, import/export, scheduling, and notification handling.
-3. Continue improving the application based on testing and feedback.
+1. Add automated tests for the database, import/export, scheduling, and notification handling.
+2. Continue improving the application based on testing and feedback.
 
 ## Versioning rule
 
 For every code change:
 
-1. increment `versionName` and `versionCode`;
+1. increment `versionName` and `versionCode` when the change is a release-worthy application update;
 2. update this README to the same version;
 3. run the GitHub Actions release build;
 4. verify the APK signature;
 5. publish the GitHub Release.
+
+Technical dependency-only updates that do not change the application version should still update the Technology section and pass the full CI build before merging.
 
 The production signing key must never be committed to the repository.
 
