@@ -122,11 +122,16 @@ jobs:
         run: |
           TAG="v${{ steps.meta.outputs.version }}"
           TITLE="DoseBloom $TAG"
-          gh release create "$TAG" "$APK_NAME" \
-            --target "$GITHUB_SHA" \
-            --title "$TITLE" \
-            --notes "DoseBloom $TAG (versionCode ${{ steps.meta.outputs.code }}). Signed release APK." \
-            --latest
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; replacing APK asset"
+            gh release upload "$TAG" "$APK_NAME" --clobber
+          else
+            gh release create "$TAG" "$APK_NAME" \
+              --target "$GITHUB_SHA" \
+              --title "$TITLE" \
+              --notes "DoseBloom $TAG (versionCode ${{ steps.meta.outputs.code }}). Signed release APK." \
+              --latest
+          fi
 
       - name: Cleanup signing files
         if: always()
