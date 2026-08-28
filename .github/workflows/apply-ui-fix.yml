@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fix startup, localization, theme and version
+      - name: Fix startup, localization, theme and source formatting
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
 
           p = Path('app/src/main/kotlin/com/dosebloom/app/MainActivity.kt')
           s = p.read_text()
+          s = s.replace('}.isSuccess; AlertDialog', '}.isSuccess\n        AlertDialog')
           s = s.replace('import androidx.appcompat.app.AppCompatActivity\n', 'import androidx.activity.ComponentActivity\n')
           s = s.replace('class MainActivity : AppCompatActivity() {', 'class MainActivity : ComponentActivity() {')
           s = s.replace('import androidx.compose.foundation.layout.heightIn\n', '')
@@ -32,7 +32,6 @@ jobs:
           if 'override fun attachBaseContext(newBase: Context)' not in s:
               s = s.replace(anchor, attach, 1)
           s = s.replace('createNotificationChannel(); requestNotificationPermission(); requestExactAlarmPermission(); Scheduler.rescheduleAll(this); render()', 'createNotificationChannel(); requestNotificationPermission(); Scheduler.rescheduleAll(this); render()')
-          s = s.replace('Text("DoseBloom 1.4.1", style = MaterialTheme.typography.labelMedium, modifier = Modifier.fillMaxWidth().padding(top = 4.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)', 'Text("DoseBloom 1.4.2", style = MaterialTheme.typography.labelMedium, modifier = Modifier.fillMaxWidth().padding(top = 4.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)')
           p.write_text(s)
 
           loc = '''package com.dosebloom.app\n\nimport android.content.Context\n\nobject Localization {\n    private const val PREFS = "dosebloom_localization"\n    private const val KEY_LANGUAGE = "language"\n    const val SYSTEM = "system"\n    const val RUSSIAN = "ru"\n    const val ENGLISH = "en"\n\n    fun currentLanguage(context: Context): String =\n        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)\n            .getString(KEY_LANGUAGE, SYSTEM) ?: SYSTEM\n\n    fun setLanguage(context: Context, language: String) {\n        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)\n            .edit().putString(KEY_LANGUAGE, language).apply()\n        if (android.os.Build.VERSION.SDK_INT >= 33) {\n            val localeManager = context.getSystemService(android.app.LocaleManager::class.java)\n            localeManager.applicationLocales = when (language) {\n                RUSSIAN -> android.os.LocaleList.forLanguageTags("ru")\n                ENGLISH -> android.os.LocaleList.forLanguageTags("en")\n                else -> android.os.LocaleList.getEmptyLocaleList()\n            }\n        }\n    }\n\n    fun profileDisplayName(context: Context, profile: String): String =\n        if (profile == "Я" && currentLanguage(context) == ENGLISH) "Me" else profile\n}\n'''
@@ -45,18 +44,12 @@ jobs:
           night = Path('app/src/main/res/values-night/styles.xml')
           night.parent.mkdir(parents=True, exist_ok=True)
           night.write_text('''<resources>\n    <style name="Theme.DoseBloom" parent="android:style/Theme.Material.NoActionBar">\n        <item name="android:fontFamily">sans</item>\n        <item name="android:colorAccent">#D0BCFF</item>\n        <item name="android:navigationBarColor">#141218</item>\n        <item name="android:statusBarColor">#141218</item>\n        <item name="android:windowLightStatusBar">false</item>\n    </style>\n</resources>\n''')
-
-          g = Path('app/build.gradle.kts')
-          x = g.read_text()
-          x = re.sub(r'versionCode\s*=\s*\d+', 'versionCode = 10', x, count=1)
-          x = re.sub(r'versionName\s*=\s*"[^"]+"', 'versionName = "1.4.2"', x, count=1)
-          g.write_text(x)
           PY
       - name: Commit fixes
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app/src/main/kotlin/com/dosebloom/app/MainActivity.kt app/src/main/kotlin/com/dosebloom/app/Localization.kt app/src/main/res/values/styles.xml app/src/main/res/values-night/styles.xml app/build.gradle.kts
+          git add app/src/main/kotlin/com/dosebloom/app/MainActivity.kt app/src/main/kotlin/com/dosebloom/app/Localization.kt app/src/main/res/values/styles.xml app/src/main/res/values-night/styles.xml
           git diff --cached --quiet && exit 0
           git commit -m 'Fix startup, localization and dark theme [ui-fix]'
           git push
