@@ -85,7 +85,7 @@ The widget searches for the nearest scheduled dose within the next seven days an
 
 ## Technology
 
-- Kotlin 2.4.0
+- Kotlin 2.4.10
 - Jetpack Compose 1.12.0 via Compose BOM 2026.08.00
 - Material 3 1.4.0
 - AndroidX Core KTX 1.19.0
@@ -97,10 +97,11 @@ The widget searches for the nearest scheduled dose within the next seven days an
 - Android App Widgets
 - JSON export/import
 - Java 17
-- Android Gradle Plugin 9.1.1
-- Gradle 9.3.1
+- Android Gradle Plugin 9.3.2
+- Gradle 9.5
 - Android Build Tools 36.0.0
 - Compile/Target SDK 37
+- GitHub Actions: current stable action majors for checkout, Java, Android SDK, and Gradle setup
 
 Compose dependencies are managed with the official Compose BOM so Compose libraries remain aligned with each other. The Kotlin Compose compiler plugin is kept aligned with the Kotlin version.
 
@@ -110,7 +111,7 @@ Open the project in Android Studio and allow Gradle to synchronize the project.
 
 The public repository uses GitHub Actions to build the signed release APK. The production signing key is **not stored in the repository**. GitHub Actions restores it temporarily from protected repository secrets during a release build and removes the temporary signing files after the build.
 
-The workflow also verifies the APK signature with Android `apksigner`, uploads the signed APK as an artifact, and publishes a GitHub Release using the version from `app/build.gradle.kts`.
+The workflow uses the Gradle Wrapper, installs only the Android platform and build-tools required by the project, verifies the APK signature with Android `apksigner`, uploads the signed APK as an artifact, and publishes a GitHub Release using the version from `app/build.gradle.kts`.
 
 The signing key must remain unchanged for future releases. This is required so that Android accepts future APKs as updates to existing installations.
 
