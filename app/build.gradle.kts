@@ -21,8 +21,8 @@ android {
         applicationId = "com.dosebloom.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 12
-        versionName = "1.4.4-test"
+        versionCode = 13
+        versionName = "1.4.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {

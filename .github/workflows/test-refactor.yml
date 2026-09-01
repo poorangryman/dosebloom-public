@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - test/full-refactor-2026-09
+      - fix/ui-1.4.5
   pull_request:
     branches:
       - main
@@ -52,8 +53,3 @@ jobs:
             app/build/outputs/apk/debug/*.apk
             app/build/outputs/apk/release/*.apk
           if-no-files-found: error
-      - name: Publish build diagnostics to the test PR
-        if: failure() && github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh pr comment 2 --body-file build.log

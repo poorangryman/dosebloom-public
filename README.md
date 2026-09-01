@@ -14,7 +14,7 @@ I'm publishing the project openly because I thought it might be useful to someon
 
 ## Current version
 
-**1.4.4** (`versionCode 12`)
+**1.4.5** (`versionCode 13`)
 
 `applicationId`: `com.dosebloom.app`
 
@@ -92,7 +92,7 @@ The widget searches for the nearest scheduled dose within the next seven days an
 - AndroidX AppCompat 1.8.0
 - AndroidX Activity Compose 1.13.0
 - AndroidX Lifecycle 2.11.0
-- SQLite via `SQLiteOpenHelper`
+- Room 2.8.4 with KSP
 - Android `AlarmManager` and `BroadcastReceiver`
 - Android App Widgets
 - JSON export/import
@@ -103,7 +103,7 @@ The widget searches for the nearest scheduled dose within the next seven days an
 - Compile/Target SDK 37
 - GitHub Actions: current stable action majors for checkout, Java, Android SDK, and Gradle setup
 
-Compose dependencies are managed with the official Compose BOM so Compose libraries remain aligned with each other. The Kotlin Compose compiler plugin is kept aligned with the Kotlin version.
+Compose dependencies are managed with the official Compose BOM so Compose libraries remain aligned with each other. The Kotlin Compose compiler plugin is kept aligned with the Kotlin version. Room annotation processing uses KSP, compatible with the AGP built-in Kotlin setup.
 
 ## Building and releases
 
@@ -116,17 +116,6 @@ The workflow uses the Gradle Wrapper, installs only the Android platform and bui
 The signing key must remain unchanged for future releases. This is required so that Android accepts future APKs as updates to existing installations.
 
 The repository does not contain the release keystore or signing passwords.
-
-## Privacy and data
-
-DoseBloom is designed around local data storage. The application does not require an account or mandatory cloud synchronization.
-
-Exported JSON files may contain sensitive medication information. Store exported files securely and do not share them publicly unless you are comfortable disclosing their contents.
-
-## Known tasks for the current version
-
-1. Add automated tests for the database, import/export, scheduling, and notification handling.
-2. Continue improving the application based on testing and feedback.
 
 ## Versioning rule
 
@@ -141,6 +130,12 @@ For every code change:
 Technical dependency-only updates that do not change the application version should still update the Technology section and pass the full CI build before merging.
 
 The production signing key must never be committed to the repository.
+
+## Privacy and data
+
+DoseBloom is designed around local data storage. The application does not require an account or mandatory cloud synchronization.
+
+Exported JSON files may contain sensitive medication information. Store exported files securely and do not share them publicly unless you are comfortable disclosing their contents.
 
 ## Why does it exist?
 
