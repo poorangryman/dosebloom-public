@@ -10,6 +10,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -27,9 +28,9 @@ class RefactoredMainActivity : ComponentActivity() {
     private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(pendingExport) }
     private val importLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) lifecycleScope.launch(Dispatchers.IO) {
-            runCatching { exportImportService.import(uri) }.onSuccess {
-                runOnUiThread { Scheduler.rescheduleAll(this@RefactoredMainActivity); refreshWidget() }
-            }
+            runCatching { exportImportService.import(uri) }
+                .onSuccess { runOnUiThread { Scheduler.rescheduleAll(this@RefactoredMainActivity); refreshWidget(); Toast.makeText(this@RefactoredMainActivity, "Импорт завершён", Toast.LENGTH_SHORT).show() } }
+                .onFailure { error -> runOnUiThread { Toast.makeText(this@RefactoredMainActivity, "Импорт не выполнен: ${error.message ?: "неизвестная ошибка"}", Toast.LENGTH_LONG).show() } }
         }
     }
 
@@ -52,7 +53,7 @@ class RefactoredMainActivity : ComponentActivity() {
     }
 
     private fun exportData() {
-        pendingExport = { uri -> lifecycleScope.launch { runCatching { exportImportService.export(uri) } } }
+        pendingExport = { uri -> lifecycleScope.launch { runCatching { exportImportService.export(uri) }.onFailure { error -> Toast.makeText(this@RefactoredMainActivity, "Экспорт не выполнен: ${error.message ?: "неизвестная ошибка"}", Toast.LENGTH_LONG).show() } } }
         exportLauncher.launch("DoseBloom-${Schedule.todayKey()}.json")
     }
 
@@ -65,14 +66,10 @@ class RefactoredMainActivity : ComponentActivity() {
     }
 
     private fun requestNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 100)
-        }
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 100)
     }
 
     private fun createNotificationChannel() {
-        getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel("dosebloom_reminders", getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_HIGH)
-        )
+        getSystemService(NotificationManager::class.java).createNotificationChannel(NotificationChannel("dosebloom_reminders", getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_HIGH))
     }
 }
