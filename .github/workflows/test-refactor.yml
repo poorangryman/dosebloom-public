@@ -34,5 +34,5 @@ jobs:
           packages: 'platform-tools'
       - name: Install required Android SDK packages
         run: sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
-      - name: Compile and run JVM tests
-        run: gradle --no-daemon testDebugUnitTest assembleDebug
+      - name: Compile, test and assemble release APK
+        run: gradle --no-daemon testDebugUnitTest assembleDebug assembleRelease
