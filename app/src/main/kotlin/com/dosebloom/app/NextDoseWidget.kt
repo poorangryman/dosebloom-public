@@ -5,10 +5,12 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.widget.RemoteViews
 import com.dosebloom.app.data.DoseBloomDatabase
+import com.dosebloom.app.data.DoseBloomRepository
 import com.dosebloom.app.data.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -30,12 +32,9 @@ class NextDoseWidget : AppWidgetProvider() {
         fun update(context: Context, manager: AppWidgetManager, id: Int) {
             val app = context.applicationContext
             widgetScope.launch {
-                val repository = com.dosebloom.app.data.DoseBloomRepository(DoseBloomDatabase.get(app))
+                val repository = DoseBloomRepository(DoseBloomDatabase.get(app))
                 val profile = SettingsRepository(app).selectedProfileOnce()
-                val meds = repository.observeAllMedicines()
-                var medicineList = emptyList<Medicine>()
-                val job = launch { meds.collect { medicineList = it.filter { m -> m.profile == profile }; cancel() } }
-                job.join()
+                val medicineList = repository.observeAllMedicines().first().filter { it.profile == profile }
                 val now = Calendar.getInstance()
                 var found: Pair<Medicine, String>? = null
                 var foundMillis = Long.MAX_VALUE
@@ -57,11 +56,11 @@ class NextDoseWidget : AppWidgetProvider() {
                     }
                 }
                 val views = RemoteViews(app.packageName, R.layout.widget_next_dose)
-                if (found == null) {
+                val item = found
+                if (item == null) {
                     views.setTextViewText(R.id.widget_title, app.getString(R.string.app_name))
                     views.setTextViewText(R.id.widget_body, app.getString(R.string.no_upcoming_doses))
                 } else {
-                    val item = found ?: return@launch
                     views.setTextViewText(R.id.widget_title, app.getString(R.string.next_dose))
                     views.setTextViewText(R.id.widget_body, "${item.second} • ${item.first.name}")
                 }
