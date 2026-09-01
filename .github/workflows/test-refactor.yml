@@ -12,6 +12,9 @@ on:
 permissions:
   contents: read
 
+env:
+  GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx4g
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -35,4 +38,18 @@ jobs:
       - name: Install required Android SDK packages
         run: sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
       - name: Compile, test and assemble release APK
-        run: gradle --no-daemon testDebugUnitTest assembleDebug assembleRelease
+        id: build
+        shell: bash
+        run: |
+          set +e
+          gradle --no-daemon testDebugUnitTest assembleDebug assembleRelease > build.log 2>&1
+          status=$?
+          tail -n 300 build.log
+          exit $status
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: dosebloom-build-log
+          path: build.log
+          if-no-files-found: ignore
