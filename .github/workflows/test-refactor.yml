@@ -43,6 +43,15 @@ jobs:
         run: |
           set -o pipefail
           gradle --no-daemon testDebugUnitTest assembleDebug assembleRelease 2>&1 | tee build.log
+      - name: Upload test APKs
+        if: success()
+        uses: actions/upload-artifact@v5
+        with:
+          name: dosebloom-test-apks
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
       - name: Publish build diagnostics to the test PR
         if: failure() && github.event_name == 'push'
         env:
