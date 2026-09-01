@@ -55,7 +55,7 @@ jobs:
           path: build.log
           if-no-files-found: ignore
       - name: Commit build log for inspection
-        if: steps.build.outputs.status != '0' && github.event_name == 'push' && !contains(github.event.head_commit.message, 'ci: capture build log')
+        if: ${{ steps.build.outputs.status != '0' && github.event_name == 'push' && contains(github.event.head_commit.message, 'ci: capture build log') == false }}
         shell: bash
         run: |
           cp build.log ci-build.log
