@@ -46,6 +46,7 @@ class RefactoredMainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        viewModel.migrateLegacySettings()
         createNotificationChannel()
         requestNotificationPermission()
         Scheduler.rescheduleAll(this)
