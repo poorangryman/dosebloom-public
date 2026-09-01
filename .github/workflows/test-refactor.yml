@@ -5,6 +5,7 @@ on:
     branches:
       - test/full-refactor-2026-09
       - fix/ui-1.4.5
+      - test/responsive-insets-2026-09
   pull_request:
     branches:
       - main

@@ -44,10 +44,21 @@ The main idea is simple: create medication schedules, record doses, and use remi
 - JSON data export and import, including actual intake history
 - Light and dark theme with adapted semantic status and calendar colors
 - Scrollable medication add/edit form for small screens
+- Responsive medication actions that do not allow the add button text to wrap vertically
 - Russian and English language support
 - In-app language selection with a system-default option
 - No mandatory account or cloud service
 - No advertising
+
+### Adaptive UI and system insets
+
+DoseBloom uses Jetpack Compose's adaptive Material navigation and Android window insets rather than device-specific screen dimensions. The application enables edge-to-edge rendering, uses Material 3 components that handle system-bar and display-cutout insets, and applies `adjustResize` for the on-screen keyboard.
+
+The primary navigation switches automatically between a bottom navigation bar on compact windows and an appropriate rail/navigation layout on larger windows. Main content is constrained to a readable width on large displays instead of stretching indefinitely.
+
+UI state that cannot be reconstructed from the database, including the selected tab, open editor, calendar selection and medication form input, is saved with Compose's `rememberSaveable` so rotation and window resizing do not discard the user's current work.
+
+This is intended to cover narrow phones, phones with camera cutouts/punch holes, landscape, split-screen, tablets and other resizable Android windows without hard-coded status-bar or camera-notch dimensions.
 
 DoseBloom is a personal tracking tool and **is not a substitute for medical advice, diagnosis, or professional healthcare**. Always follow the instructions provided by your doctor or medication packaging.
 
@@ -88,6 +99,7 @@ The widget searches for the nearest scheduled dose within the next seven days an
 - Kotlin 2.4.10
 - Jetpack Compose 1.12.0 via Compose BOM 2026.08.00
 - Material 3 1.4.0
+- Material 3 Adaptive Navigation Suite 1.3.0
 - AndroidX Core KTX 1.19.0
 - AndroidX AppCompat 1.8.0
 - AndroidX Activity Compose 1.13.0
@@ -98,7 +110,7 @@ The widget searches for the nearest scheduled dose within the next seven days an
 - JSON export/import
 - Java 17
 - Android Gradle Plugin 9.3.2
-- Gradle 9.5
+- Gradle 9.5.1
 - Android Build Tools 36.0.0
 - Compile/Target SDK 37
 - GitHub Actions: current stable action majors for checkout, Java, Android SDK, and Gradle setup
