@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <application android:allowBackup="true" android:fullBackupContent="@xml/backup_rules" android:label="@string/app_name" android:localeConfig="@xml/locales_config" android:icon="@drawable/ic_dosebloom" android:supportsRtl="true" android:theme="@style/Theme.DoseBloom">
-        <activity android:name=".MainActivity" android:exported="true">
+        <activity android:name=".RefactoredMainActivity" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
         <receiver android:name=".ReminderReceiver" android:exported="false" />
