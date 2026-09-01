@@ -16,14 +16,16 @@ object Scheduler {
     @Volatile private var applicationContext: Context? = null
 
     fun cancelMedicine(context: Context?, medicine: Medicine) {
-        val ctx = context ?: applicationContext ?: return
-        applicationContext = ctx.applicationContext
-        val am = ctx.getSystemService(AlarmManager::class.java)
-        val start = Calendar.getInstance()
-        for (day in 0..DAYS) {
-            val c = (start.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, day) }
-            val date = Schedule.dateKey(c)
-            for (time in medicine.times) am.cancel(pending(ctx, medicine.id, date, time))
+        val ctx = context?.applicationContext ?: applicationContext ?: return
+        applicationContext = ctx
+        scope.launch {
+            val am = ctx.getSystemService(AlarmManager::class.java)
+            val start = Calendar.getInstance()
+            for (day in 0..DAYS) {
+                val c = (start.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, day) }
+                val date = Schedule.dateKey(c)
+                for (time in medicine.times) am.cancel(pending(ctx, medicine.id, date, time))
+            }
         }
     }
 
@@ -40,8 +42,8 @@ object Scheduler {
         }
     }
 
-    fun rescheduleAll(context: Context) {
-        val app = context.applicationContext
+    fun rescheduleAll(context: Context?) {
+        val app = context?.applicationContext ?: applicationContext ?: return
         applicationContext = app
         scope.launch {
             val medicines = Db(app).medicines()
