@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import com.dosebloom.app.data.DoseBloomDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,7 +47,10 @@ object Scheduler {
         val app = context?.applicationContext ?: applicationContext ?: return
         applicationContext = app
         scope.launch {
-            val medicines = Db(app).medicines()
+            val entities = DoseBloomDatabase.get(app).medicineDao().all()
+            val medicines = entities.map { entity ->
+                Medicine(entity.id, entity.name, entity.dose, entity.unit, entity.times.split(",").filter(String::isNotBlank), entity.startDate, entity.endDate, entity.note, entity.stock, entity.lowStock, entity.asNeeded == 1, entity.profile)
+            }
             cancelAll(app, medicines)
             val am = app.getSystemService(AlarmManager::class.java)
             val now = System.currentTimeMillis()
