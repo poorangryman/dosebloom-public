@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 class DoseBloomViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = DoseBloomRepository(DoseBloomDatabase.get(application))
     private val settings = SettingsRepository(application)
-
     val selectedProfile: StateFlow<String> = settings.selectedProfile.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "Я")
     val darkMode: StateFlow<Boolean> = settings.darkMode.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
     val language: StateFlow<String> = settings.language.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "system")
@@ -28,8 +27,11 @@ class DoseBloomViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun migrateLegacySettings() = viewModelScope.launch {
         val legacy = getApplication<Application>().getSharedPreferences("MainActivity", Application.MODE_PRIVATE)
-        if (settings.selectedProfile.first() == "Я") legacy.getString("selected_profile", null)?.let(settings::setSelectedProfile)
-        if (!settings.darkMode.first()) legacy.getBoolean("dark_mode", false).takeIf { it }?.let(settings::setDarkMode)
+        if (settings.selectedProfile.first() == "Я") {
+            val legacyProfile = legacy.getString("selected_profile", null)
+            if (!legacyProfile.isNullOrBlank()) settings.setSelectedProfile(legacyProfile)
+        }
+        if (!settings.darkMode.first() && legacy.getBoolean("dark_mode", false)) settings.setDarkMode(true)
     }
 
     fun observeIntakes(date: String): StateFlow<List<Intake>> = repository.observeIntakes(date).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
