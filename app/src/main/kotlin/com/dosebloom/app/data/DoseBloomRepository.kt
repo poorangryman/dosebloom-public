@@ -31,8 +31,11 @@ class DoseBloomRepository(private val database: DoseBloomDatabase) {
         if (normalized.isNotEmpty()) profiles.insert(ProfileEntity(name = normalized))
     }
 
-    suspend fun removeProfile(name: String) {
-        if (name != "Я") profiles.delete(name)
+    suspend fun removeProfile(name: String) = database.withTransaction {
+        if (name != "Я") {
+            medicines.moveProfile(name, "Я")
+            profiles.delete(name)
+        }
     }
 
     suspend fun takeDose(medicineId: Long, date: String, time: String, actualMillis: Long = System.currentTimeMillis()): Boolean =
