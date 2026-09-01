@@ -8,29 +8,47 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.dosebloom.app.data.DoseBloomDatabase
+import com.dosebloom.app.data.DoseBloomRepository
+import com.dosebloom.app.data.IntakeStatus
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+
+private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        val pendingResult = goAsync()
         val id = intent.getLongExtra("medicineId", -1)
-        val time = intent.getStringExtra("time") ?: return
-        val date = intent.getStringExtra("date") ?: return
-        val medicine = Db(context).medicines().firstOrNull { it.id == id } ?: return
-        val nm = context.getSystemService(NotificationManager::class.java)
-        if (Build.VERSION.SDK_INT >= 26) {
-            nm.createNotificationChannel(NotificationChannel("dosebloom_reminders", context.getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_HIGH))
+        val time = intent.getStringExtra("time") ?: run { pendingResult.finish(); return }
+        val date = intent.getStringExtra("date") ?: run { pendingResult.finish(); return }
+        val appContext = context.applicationContext
+        receiverScope.launch {
+            try {
+                val repository = DoseBloomRepository(DoseBloomDatabase.get(appContext))
+                val medicine = repository.findMedicine(id) ?: return@launch
+                val nm = appContext.getSystemService(NotificationManager::class.java)
+                if (Build.VERSION.SDK_INT >= 26) {
+                    nm.createNotificationChannel(NotificationChannel("dosebloom_reminders", appContext.getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_HIGH))
+                }
+                val notification = NotificationCompat.Builder(appContext, "dosebloom_reminders")
+                    .setSmallIcon(android.R.drawable.ic_popup_reminder)
+                    .setContentTitle(appContext.getString(R.string.notification_title))
+                    .setContentText("${medicine.name} — ${medicine.dose} ${medicine.unit}")
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .addAction(0, appContext.getString(R.string.notification_taken), action(appContext, "TAKE", id, time, date, 1))
+                    .addAction(0, appContext.getString(R.string.notification_postpone), action(appContext, "POSTPONE", id, time, date, 2))
+                    .addAction(0, appContext.getString(R.string.notification_skip), action(appContext, "SKIP", id, time, date, 3))
+                    .build()
+                nm.notify(("$id|$date|$time").hashCode(), notification)
+                Scheduler.rescheduleAll(appContext)
+            } finally {
+                pendingResult.finish()
+            }
         }
-        val n = NotificationCompat.Builder(context, "dosebloom_reminders")
-            .setSmallIcon(android.R.drawable.ic_popup_reminder)
-            .setContentTitle(context.getString(R.string.notification_title))
-            .setContentText("${medicine.name} — ${medicine.dose} ${medicine.unit}")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .addAction(0, context.getString(R.string.notification_taken), action(context, "TAKE", id, time, date, 1))
-            .addAction(0, context.getString(R.string.notification_postpone), action(context, "POSTPONE", id, time, date, 2))
-            .addAction(0, context.getString(R.string.notification_skip), action(context, "SKIP", id, time, date, 3))
-            .build()
-        nm.notify(("$id|$date|$time").hashCode(), n)
-        Scheduler.rescheduleAll(context)
     }
 
     private fun action(context: Context, action: String, id: Long, time: String, date: String, request: Int) =
@@ -44,28 +62,34 @@ class ReminderReceiver : BroadcastReceiver() {
 
 class ActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        val pendingResult = goAsync()
         val id = intent.getLongExtra("medicineId", -1)
-        val time = intent.getStringExtra("time") ?: return
-        val date = intent.getStringExtra("date") ?: return
-        val db = Db(context)
-        if (!db.medicines().any { it.id == id }) return
-        when (intent.action) {
-            "TAKE" -> if (!db.hasIntake(id, date, time)) {
-                db.addIntake(id, date, time, "TAKEN")
-                db.decreaseStock(id)
+        val time = intent.getStringExtra("time") ?: run { pendingResult.finish(); return }
+        val date = intent.getStringExtra("date") ?: run { pendingResult.finish(); return }
+        val appContext = context.applicationContext
+        receiverScope.launch {
+            try {
+                val repository = DoseBloomRepository(DoseBloomDatabase.get(appContext))
+                when (intent.action) {
+                    "TAKE" -> repository.takeDose(id, date, time)
+                    "SKIP" -> repository.recordIntake(id, date, time, IntakeStatus.SKIPPED)
+                    "POSTPONE" -> Scheduler.postpone(appContext, id, time, date)
+                }
+                appContext.getSystemService(NotificationManager::class.java).cancel(("$id|$date|$time").hashCode())
+                if (intent.action != "POSTPONE") Scheduler.rescheduleAll(appContext)
+                NextDoseWidget.refreshAll(appContext)
+            } finally {
+                pendingResult.finish()
             }
-            "SKIP" -> if (!db.hasIntake(id, date, time)) db.addIntake(id, date, time, "SKIPPED")
-            "POSTPONE" -> Scheduler.postpone(context, id, time, date)
         }
-        context.getSystemService(NotificationManager::class.java).cancel(("$id|$date|$time").hashCode())
-        if (intent.action != "POSTPONE") Scheduler.rescheduleAll(context)
     }
 }
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_TIME_CHANGED || intent.action == Intent.ACTION_TIMEZONE_CHANGED) {
-            Scheduler.rescheduleAll(context)
+            Scheduler.rescheduleAll(context.applicationContext)
+            NextDoseWidget.refreshAll(context.applicationContext)
         }
     }
 }
