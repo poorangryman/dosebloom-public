@@ -1,0 +1,38 @@
+name: DoseBloom refactor tests
+
+on:
+  push:
+    branches:
+      - test/full-refactor-2026-09
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Set up Gradle 9.5.1
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.5.1'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+      - name: Install required Android SDK packages
+        run: sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
+      - name: Compile and run JVM tests
+        run: gradle --no-daemon testDebugUnitTest assembleDebug
