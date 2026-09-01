@@ -63,32 +63,17 @@ fun DoseBloomScreen(activity: RefactoredMainActivity, viewModel: DoseBloomViewMo
 
 @Composable
 private fun DoseBloomContent(activity: RefactoredMainActivity, viewModel: DoseBloomViewModel, onExport: () -> Unit, onImport: () -> Unit, onWidgetRefresh: () -> Unit) {
-    var tab by remember { mutableIntStateOf(0) }
-    var editor by remember { mutableStateOf<Medicine?>(null) }
-    var addMedicine by remember { mutableStateOf(false) }
-    var profileDialog by remember { mutableStateOf(false) }
-    var settingsDialog by remember { mutableStateOf(false) }
-    val profile by viewModel.selectedProfile.collectAsStateWithLifecycle()
-    val medicines by viewModel.medicines.collectAsStateWithLifecycle()
-    val profiles by viewModel.profiles.collectAsStateWithLifecycle()
-    val language by viewModel.language.collectAsStateWithLifecycle()
+    var tab by remember { mutableIntStateOf(0) }; var editor by remember { mutableStateOf<Medicine?>(null) }; var addMedicine by remember { mutableStateOf(false) }; var profileDialog by remember { mutableStateOf(false) }; var settingsDialog by remember { mutableStateOf(false) }
+    val profile by viewModel.selectedProfile.collectAsStateWithLifecycle(); val medicines by viewModel.medicines.collectAsStateWithLifecycle(); val profiles by viewModel.profiles.collectAsStateWithLifecycle(); val language by viewModel.language.collectAsStateWithLifecycle(); val dark by viewModel.darkMode.collectAsStateWithLifecycle()
     Scaffold(
-        topBar = {
-            Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) { Text("DoseBloom", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold); Text(profile) }
-                TextButton(onClick = { profileDialog = true }) { Text("Профиль") }
-                TextButton(onClick = { settingsDialog = true }) { Text("⚙", style = MaterialTheme.typography.titleLarge) }
-            }
-        },
+        topBar = { Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("DoseBloom", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold); Text(profile) }; TextButton(onClick = { profileDialog = true }) { Text("Профиль") }; TextButton(onClick = { settingsDialog = true }) { Text("⚙", style = MaterialTheme.typography.titleLarge) } } },
         bottomBar = { NavigationBar { NavigationBarItem(tab == 0, { tab = 0 }, icon = { Text("●") }, label = { Text("Сегодня") }); NavigationBarItem(tab == 1, { tab = 1 }, icon = { Text("▦") }, label = { Text("История") }); NavigationBarItem(tab == 2, { tab = 2 }, icon = { Text("+") }, label = { Text("Лекарства") }) } }
     ) { padding ->
-        AnimatedContent(tab, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "screen") {
-            when (it) {
-                0 -> TodayScreen(viewModel, medicines, onWidgetRefresh, Modifier.fillMaxSize().padding(padding))
-                1 -> HistoryScreen(viewModel, medicines, Modifier.fillMaxSize().padding(padding))
-                else -> MedicinesScreen(viewModel, medicines, onExport, onImport, onWidgetRefresh, activity, Modifier.fillMaxSize().padding(padding), { addMedicine = true }, { editor = it })
-            }
-        }
+        AnimatedContent(tab, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "screen") { when (it) {
+            0 -> TodayScreen(viewModel, medicines, onWidgetRefresh, Modifier.fillMaxSize().padding(padding))
+            1 -> HistoryScreen(viewModel, medicines, Modifier.fillMaxSize().padding(padding))
+            else -> MedicinesScreen(viewModel, medicines, onExport, onImport, onWidgetRefresh, activity, Modifier.fillMaxSize().padding(padding), { addMedicine = true }, { editor = it })
+        } }
     }
     if (addMedicine || editor != null) MedicineEditor(editor, profile, onDismiss = { addMedicine = false; editor = null }) { medicine -> viewModel.saveMedicine(medicine); Scheduler.rescheduleAll(activity); onWidgetRefresh(); addMedicine = false; editor = null }
     if (profileDialog) ProfileDialog(profiles, profile, { viewModel.selectProfile(it); profileDialog = false }, { viewModel.addProfile(it); viewModel.selectProfile(it.trim()); profileDialog = false }, viewModel::removeProfile)
@@ -97,43 +82,20 @@ private fun DoseBloomContent(activity: RefactoredMainActivity, viewModel: DoseBl
 
 @Composable
 private fun TodayScreen(viewModel: DoseBloomViewModel, medicines: List<Medicine>, onWidgetRefresh: () -> Unit, modifier: Modifier) {
-    val date = Schedule.todayKey()
-    val records by remember(date) { viewModel.observeIntakes(date) }.collectAsStateWithLifecycle()
-    val events = remember(medicines, date) { Schedule.events(medicines, date) }
-    LazyColumn(modifier.widthLimited().padding(horizontal = 16.dp), contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item { Text("Сегодня", style = MaterialTheme.typography.headlineMedium) }
-        if (events.isEmpty()) item { InfoCard("Нет плановых приёмов на сегодня.") }
-        items(events, key = { "${it.first.id}-${it.second}" }) { (medicine, time) ->
-            val record = records.firstOrNull { it.medicineId == medicine.id && it.plannedTime == time }
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) { Column(Modifier.padding(18.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) { Text(time, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Spacer(Modifier.weight(1f)); StatusPill(record?.status) }
-                Text(medicine.name, style = MaterialTheme.typography.titleLarge); Text("${medicine.dose} ${medicine.unit}")
-                if (medicine.note.isNotBlank()) Text(medicine.note, style = MaterialTheme.typography.bodySmall)
-                if (record == null) Button(onClick = { viewModel.takeDose(medicine.id, date, time); onWidgetRefresh() }, Modifier.fillMaxWidth().padding(top = 10.dp)) { Text("Принять") }
-            } }
-        }
-    }
+    val date = Schedule.todayKey(); val records by remember(date) { viewModel.observeIntakes(date) }.collectAsStateWithLifecycle(); val events = remember(medicines, date) { Schedule.events(medicines, date) }
+    LazyColumn(modifier.widthLimited().padding(horizontal = 16.dp), contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { item { Text("Сегодня", style = MaterialTheme.typography.headlineMedium) }; if (events.isEmpty()) item { InfoCard("Нет плановых приёмов на сегодня.") }; items(events, key = { "${it.first.id}-${it.second}" }) { (medicine, time) -> val record = records.firstOrNull { it.medicineId == medicine.id && it.plannedTime == time }; Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) { Column(Modifier.padding(18.dp)) { Row(verticalAlignment = Alignment.CenterVertically) { Text(time, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Spacer(Modifier.weight(1f)); StatusPill(record?.status) }; Text(medicine.name, style = MaterialTheme.typography.titleLarge); Text("${medicine.dose} ${medicine.unit}"); if (medicine.note.isNotBlank()) Text(medicine.note, style = MaterialTheme.typography.bodySmall); if (record == null) Button(onClick = { viewModel.takeDose(medicine.id, date, time); onWidgetRefresh() }, Modifier.fillMaxWidth().padding(top = 10.dp)) { Text("Принять") } } } } }
 }
 
 @Composable
 private fun HistoryScreen(viewModel: DoseBloomViewModel, medicines: List<Medicine>, modifier: Modifier) {
-    var month by remember { mutableStateOf(Calendar.getInstance()) }
-    var selectedDate by remember { mutableStateOf(Schedule.todayKey()) }
-    val year = month.get(Calendar.YEAR); val monthIndex = month.get(Calendar.MONTH)
-    val from = remember(year, monthIndex) { Calendar.getInstance().apply { set(year, monthIndex, 1, 0, 0, 0); set(Calendar.MILLISECOND, 0) } }
-    val to = remember(year, monthIndex) { Calendar.getInstance().apply { set(year, monthIndex, getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59); set(Calendar.MILLISECOND, 999) } }
-    val records by remember(from.timeInMillis, to.timeInMillis) { viewModel.observeIntakes(Schedule.dateKey(from), Schedule.dateKey(to)) }.collectAsStateWithLifecycle()
-    val recordDates = remember(records) { records.map { it.date }.toSet() }
+    var month by remember { mutableStateOf(Calendar.getInstance()) }; var selectedDate by remember { mutableStateOf(Schedule.todayKey()) }; val year = month.get(Calendar.YEAR); val monthIndex = month.get(Calendar.MONTH)
+    val from = remember(year, monthIndex) { Calendar.getInstance().apply { set(year, monthIndex, 1, 0, 0, 0); set(Calendar.MILLISECOND, 0) } }; val to = remember(year, monthIndex) { Calendar.getInstance().apply { set(year, monthIndex, getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59); set(Calendar.MILLISECOND, 999) } }
+    val records by remember(from.timeInMillis, to.timeInMillis) { viewModel.observeIntakes(Schedule.dateKey(from), Schedule.dateKey(to)) }.collectAsStateWithLifecycle(); val recordDates = remember(records) { records.map { it.date }.toSet() }
     Column(modifier.widthLimited().padding(horizontal = 16.dp).verticalScroll(rememberScrollState())) {
         Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) { Text("История", style = MaterialTheme.typography.headlineMedium); Spacer(Modifier.weight(1f)); TextButton(onClick = { month = (month.clone() as Calendar).apply { add(Calendar.MONTH, -1) }; selectedDate = Schedule.dateKey(month) }) { Text("‹") }; TextButton(onClick = { month = (month.clone() as Calendar).apply { add(Calendar.MONTH, 1) }; selectedDate = Schedule.dateKey(month) }) { Text("›") } }
-        Text(SimpleDateFormat("LLLL yyyy", Locale.getDefault()).format(month.time).replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(10.dp)); MonthCalendar(month, selectedDate, recordDates) { selectedDate = it }; Spacer(Modifier.height(12.dp))
-        val selectedRecords = records.filter { it.date == selectedDate }
-        Text(selectedDate.replace('-', '.'), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        if (selectedRecords.isEmpty()) InfoCard("За этот день записей нет.") else selectedRecords.forEach { record ->
-            val name = medicines.firstOrNull { it.id == record.medicineId }?.name ?: "Лекарство"
-            Card(Modifier.fillMaxWidth().padding(top = 8.dp)) { Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(record.plannedTime, fontWeight = FontWeight.SemiBold); Text(name) }; StatusPill(record.status) } }
-        }
+        Text(SimpleDateFormat("LLLL yyyy", Locale.getDefault()).format(month.time).replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.titleLarge); Spacer(Modifier.height(10.dp)); MonthCalendar(month, selectedDate, recordDates) { selectedDate = it }; Spacer(Modifier.height(12.dp))
+        val selectedRecords = records.filter { it.date == selectedDate }; Text(selectedDate.replace('-', '.'), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        if (selectedRecords.isEmpty()) InfoCard("За этот день записей нет.") else selectedRecords.forEach { record -> val name = medicines.firstOrNull { it.id == record.medicineId }?.name ?: "Лекарство"; Card(Modifier.fillMaxWidth().padding(top = 8.dp)) { Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(record.plannedTime, fontWeight = FontWeight.SemiBold); Text(name) }; StatusPill(record.status) } } }
         Spacer(Modifier.height(24.dp))
     }
 }
@@ -142,31 +104,13 @@ private fun HistoryScreen(viewModel: DoseBloomViewModel, medicines: List<Medicin
 private fun MonthCalendar(month: Calendar, selectedDate: String, recordDates: Set<String>, onDateSelected: (String) -> Unit) {
     val weekdays = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) { weekdays.forEach { Text(it, Modifier.weight(1f).padding(vertical = 4.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelMedium) } }
-    val first = (month.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, 1) }
-    val offset = (first.get(Calendar.DAY_OF_WEEK) + 5) % 7
-    val days = month.getActualMaximum(Calendar.DAY_OF_MONTH); val total = ((offset + days + 6) / 7) * 7
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        for (weekStart in 0 until total step 7) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            for (cell in weekStart until weekStart + 7) {
-                val day = cell - offset + 1
-                if (day !in 1..days) Spacer(Modifier.weight(1f).aspectRatio(1f)) else {
-                    val date = (month.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, day) }; val key = Schedule.dateKey(date); val selected = key == selectedDate; val hasRecord = key in recordDates
-                    Surface(onClick = { onDateSelected(key) }, modifier = Modifier.weight(1f).aspectRatio(1f), color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(10.dp)) {
-                        Column(Modifier.fillMaxSize().padding(vertical = 5.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Text(day.toString(), fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal); Text(if (hasRecord) "•" else " ", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall) }
-                    }
-                }
-            }
-        }
-    }
+    val first = (month.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, 1) }; val offset = (first.get(Calendar.DAY_OF_WEEK) + 5) % 7; val days = month.getActualMaximum(Calendar.DAY_OF_MONTH); val total = ((offset + days + 6) / 7) * 7
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) { for (weekStart in 0 until total step 7) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) { for (cell in weekStart until weekStart + 7) { val day = cell - offset + 1; if (day !in 1..days) Spacer(Modifier.weight(1f).aspectRatio(1f)) else { val date = (month.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, day) }; val key = Schedule.dateKey(date); val selected = key == selectedDate; val hasRecord = key in recordDates; Surface(onClick = { onDateSelected(key) }, modifier = Modifier.weight(1f).aspectRatio(1f), color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(10.dp)) { Column(Modifier.fillMaxSize().padding(vertical = 5.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Text(day.toString(), fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal); Text(if (hasRecord) "•" else " ", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall) } } } } } }
 }
 
 @Composable
 private fun MedicinesScreen(viewModel: DoseBloomViewModel, medicines: List<Medicine>, onExport: () -> Unit, onImport: () -> Unit, onWidgetRefresh: () -> Unit, activity: RefactoredMainActivity, modifier: Modifier, onAdd: () -> Unit, onEdit: (Medicine) -> Unit) {
-    LazyColumn(modifier.widthLimited().padding(horizontal = 16.dp), contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item { Column(Modifier.fillMaxWidth()) { Text("Лекарства", style = MaterialTheme.typography.headlineMedium); Spacer(Modifier.height(8.dp)); Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedButton(onClick = onExport, Modifier.weight(1f)) { Text("Экспорт") }; OutlinedButton(onClick = onImport, Modifier.weight(1f)) { Text("Импорт") } }; Spacer(Modifier.height(8.dp)); FilledTonalButton(onClick = onAdd, Modifier.fillMaxWidth()) { Text("＋  Добавить лекарство") } } }
-        if (medicines.isEmpty()) item { InfoCard("Лекарств пока нет.") }
-        items(medicines, key = { it.id }) { medicine -> Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) { Text(medicine.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold); Text("${medicine.dose} ${medicine.unit}"); if (!medicine.asNeeded) Text(medicine.times.joinToString(", ")); Text("Запас: ${medicine.stock} · минимум: ${medicine.lowStock}"); if (medicine.stock <= medicine.lowStock) Text("Запас заканчивается", color = MaterialTheme.colorScheme.error); Row { TextButton(onClick = { onEdit(medicine) }) { Text("Изменить") }; TextButton(onClick = { viewModel.deleteMedicine(medicine.id); Scheduler.rescheduleAll(activity); onWidgetRefresh() }) { Text("Удалить") } } } } }
-    }
+    LazyColumn(modifier.widthLimited().padding(horizontal = 16.dp), contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { item { Column(Modifier.fillMaxWidth()) { Text("Лекарства", style = MaterialTheme.typography.headlineMedium); Spacer(Modifier.height(8.dp)); Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedButton(onClick = onExport, Modifier.weight(1f)) { Text("Экспорт") }; OutlinedButton(onClick = onImport, Modifier.weight(1f)) { Text("Импорт") } }; Spacer(Modifier.height(8.dp)); FilledTonalButton(onClick = onAdd, Modifier.fillMaxWidth()) { Text("＋  Добавить лекарство") } } }; if (medicines.isEmpty()) item { InfoCard("Лекарств пока нет.") }; items(medicines, key = { it.id }) { medicine -> Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) { Text(medicine.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold); Text("${medicine.dose} ${medicine.unit}"); if (!medicine.asNeeded) Text(medicine.times.joinToString(", ")); Text("Запас: ${medicine.stock} · минимум: ${medicine.lowStock}"); if (medicine.stock <= medicine.lowStock) Text("Запас заканчивается", color = MaterialTheme.colorScheme.error); Row { TextButton(onClick = { onEdit(medicine) }) { Text("Изменить") }; TextButton(onClick = { viewModel.deleteMedicine(medicine.id); Scheduler.rescheduleAll(activity); onWidgetRefresh() }) { Text("Удалить") } } } } } }
 }
 
 @Composable
