@@ -4,10 +4,15 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 object Scheduler {
     private const val DAYS = 30
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     @Volatile private var applicationContext: Context? = null
 
     fun cancelMedicine(context: Context?, medicine: Medicine) {
@@ -36,33 +41,35 @@ object Scheduler {
     }
 
     fun rescheduleAll(context: Context) {
-        applicationContext = context.applicationContext
-        val db = Db(context)
-        val medicines = db.medicines()
-        cancelAll(context, medicines)
-        val am = context.getSystemService(AlarmManager::class.java)
-        val now = System.currentTimeMillis()
-        val start = Calendar.getInstance()
-        for (m in medicines) {
-            if (m.asNeeded) continue
-            for (day in 0..DAYS) {
-                val c = (start.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, day) }
-                if (!Schedule.eligible(m, c)) continue
-                val date = Schedule.dateKey(c)
-                for (time in m.times) {
-                    if (!Schedule.validTime(time)) continue
-                    val p = time.split(":")
-                    val alarm = (c.clone() as Calendar).apply {
-                        set(Calendar.HOUR_OF_DAY, p[0].toInt())
-                        set(Calendar.MINUTE, p[1].toInt())
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }
-                    if (alarm.timeInMillis <= now) continue
-                    try {
-                        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarm.timeInMillis, pending(context, m.id, date, time))
-                    } catch (_: SecurityException) {
-                        am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarm.timeInMillis, pending(context, m.id, date, time))
+        val app = context.applicationContext
+        applicationContext = app
+        scope.launch {
+            val medicines = Db(app).medicines()
+            cancelAll(app, medicines)
+            val am = app.getSystemService(AlarmManager::class.java)
+            val now = System.currentTimeMillis()
+            val start = Calendar.getInstance()
+            for (m in medicines) {
+                if (m.asNeeded) continue
+                for (day in 0..DAYS) {
+                    val c = (start.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, day) }
+                    if (!Schedule.eligible(m, c)) continue
+                    val date = Schedule.dateKey(c)
+                    for (time in m.times) {
+                        if (!Schedule.validTime(time)) continue
+                        val p = time.split(":")
+                        val alarm = (c.clone() as Calendar).apply {
+                            set(Calendar.HOUR_OF_DAY, p[0].toInt())
+                            set(Calendar.MINUTE, p[1].toInt())
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
+                        if (alarm.timeInMillis <= now) continue
+                        try {
+                            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarm.timeInMillis, pending(app, m.id, date, time))
+                        } catch (_: SecurityException) {
+                            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarm.timeInMillis, pending(app, m.id, date, time))
+                        }
                     }
                 }
             }
