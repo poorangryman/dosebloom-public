@@ -10,7 +10,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  issues: write
 
 env:
   GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx4g
@@ -38,29 +39,12 @@ jobs:
       - name: Install required Android SDK packages
         run: sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
       - name: Compile, test and assemble release APK
-        id: build
         shell: bash
         run: |
-          set +e
-          gradle --no-daemon testDebugUnitTest assembleDebug assembleRelease > build.log 2>&1
-          status=$?
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          tail -n 300 build.log
-          exit $status
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v5
-        with:
-          name: dosebloom-build-log
-          path: build.log
-          if-no-files-found: ignore
-      - name: Commit build log for inspection
-        if: ${{ steps.build.outputs.status != '0' && github.event_name == 'push' && contains(github.event.head_commit.message, 'ci: capture build log') == false }}
-        shell: bash
-        run: |
-          cp build.log ci-build.log
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ci-build.log
-          git commit -m "ci: capture build log"
-          git push
+          set -o pipefail
+          gradle --no-daemon testDebugUnitTest assembleDebug assembleRelease 2>&1 | tee build.log
+      - name: Publish build diagnostics to the test PR
+        if: failure() && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment 2 --body-file build.log
