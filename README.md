@@ -14,7 +14,7 @@ I'm publishing the project openly because I thought it might be useful to someon
 
 ## Current version
 
-**1.4.8** (`versionCode 16`)
+**1.4.9** (`versionCode 17`)
 
 `applicationId`: `com.dosebloom.app`
 

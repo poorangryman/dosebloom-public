@@ -38,6 +38,9 @@ interface MedicineDao {
 
     @Query("UPDATE medicines SET stock = stock + 1 WHERE id = :id")
     suspend fun increaseStock(id: Long)
+
+    @Query("UPDATE medicines SET stock = stock + :amount WHERE id = :id")
+    suspend fun addStock(id: Long, amount: Int)
 }
 
 @Dao

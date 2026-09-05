@@ -13,4 +13,17 @@
     <string name="default_profile">Я</string><string name="default_unit">таблетка</string><string name="next_dose">Следующий приём</string><string name="no_upcoming_doses">Нет ближайших приёмов</string><string name="notification_title">DoseBloom • время приёма</string><string name="notification_taken">ПРИНЯТО</string><string name="notification_postpone">+10 МИН</string><string name="notification_skip">ПРОПУСТИТЬ</string>
     <string name="add_medicine">＋  Добавить лекарство</string><string name="no_records_for_day">За этот день записей нет.</string><string name="import_success">Импорт завершён</string><string name="import_error">Импорт не выполнен: %1$s</string><string name="export_error">Экспорт не выполнен: %1$s</string>
     <string name="take_as_needed">Принять сейчас</string><string name="undo">Отменить</string>
+    <string name="search_medicines_hint">Поиск лекарств...</string>
+    <string name="filter_all">Все</string>
+    <string name="filter_scheduled">По расписанию</string>
+    <string name="filter_as_needed">По необходимости</string>
+    <string name="filter_low_stock">Заканчиваются</string>
+    <string name="daily_progress_title">Прогресс на сегодня</string>
+    <string name="daily_progress_summary">Принято %1$d из %2$d (%3$d%%)</string>
+    <string name="daily_progress_all_done">Все лекарства на сегодня приняты! 🎉</string>
+    <string name="daily_progress_no_doses">На сегодня нет запланированных приёмов</string>
+    <string name="restock">Пополнить</string>
+    <string name="restock_amount">+%1$d</string>
+    <string name="history_month_summary">Принято: %1$d • Регулярность: %2$d%%</string>
+    <string name="profile_label">Профиль</string>
 </resources>

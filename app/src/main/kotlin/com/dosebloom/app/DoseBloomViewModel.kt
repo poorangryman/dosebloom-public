@@ -39,6 +39,7 @@ class DoseBloomViewModel(application: Application) : AndroidViewModel(applicatio
     fun takeDose(medicineId: Long, date: String, time: String) = viewModelScope.launch { repository.takeDose(medicineId, date, time) }
     fun undoDose(medicineId: Long, date: String, time: String) = viewModelScope.launch { repository.undoDose(medicineId, date, time) }
     fun takeAsNeeded(medicineId: Long) = viewModelScope.launch { repository.takeAsNeeded(medicineId) }
+    fun restock(medicineId: Long, amount: Int) = viewModelScope.launch { repository.restock(medicineId, amount) }
     fun recordIntake(medicineId: Long, date: String, time: String, status: IntakeStatus) = viewModelScope.launch { repository.recordIntake(medicineId, date, time, status) }
     fun saveMedicine(medicine: Medicine) = viewModelScope.launch { if (medicine.id == 0L) repository.addMedicine(medicine) else repository.updateMedicine(medicine) }
     fun deleteMedicine(id: Long) = viewModelScope.launch { repository.deleteMedicine(id) }

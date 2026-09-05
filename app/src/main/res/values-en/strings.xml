@@ -14,4 +14,17 @@
     <string name="notification_title">DoseBloom • time for a dose</string><string name="notification_taken">TAKEN</string><string name="notification_postpone">+10 MIN</string><string name="notification_skip">SKIP</string>
     <string name="add_medicine">＋  Add medication</string><string name="no_records_for_day">No records for this day.</string><string name="import_success">Import completed</string><string name="import_error">Import failed: %1$s</string><string name="export_error">Export failed: %1$s</string>
     <string name="take_as_needed">Take now</string><string name="undo">Undo</string>
+    <string name="search_medicines_hint">Search medicines...</string>
+    <string name="filter_all">All</string>
+    <string name="filter_scheduled">Scheduled</string>
+    <string name="filter_as_needed">As needed</string>
+    <string name="filter_low_stock">Low stock</string>
+    <string name="daily_progress_title">Today\'s progress</string>
+    <string name="daily_progress_summary">%1$d of %2$d taken (%3$d%%)</string>
+    <string name="daily_progress_all_done">All medications taken for today! 🎉</string>
+    <string name="daily_progress_no_doses">No scheduled doses for today</string>
+    <string name="restock">Restock</string>
+    <string name="restock_amount">+%1$d</string>
+    <string name="history_month_summary">Taken: %1$d • Adherence: %2$d%%</string>
+    <string name="profile_label">Profile</string>
 </resources>

@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,9 +31,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -54,8 +62,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -66,16 +76,43 @@ import java.util.Calendar
 import java.util.Locale
 
 private val DoseLight = androidx.compose.material3.lightColorScheme(
-    primary = Color(0xFF6B4DB3),
-    primaryContainer = Color(0xFFE9DDFF),
-    background = Color(0xFFF8F7F4),
-    surface = Color(0xFFF8F7F4)
+    primary = Color(0xFF2A6B55),
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFD6EFE3),
+    onPrimaryContainer = Color(0xFF04281B),
+    secondary = Color(0xFF4C6357),
+    onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFCEE9D9),
+    onSecondaryContainer = Color(0xFF092016),
+    tertiary = Color(0xFF3B6470),
+    background = Color(0xFFF7F9F8),
+    onBackground = Color(0xFF191C1A),
+    surface = Color(0xFFFFFFFF),
+    onSurface = Color(0xFF191C1A),
+    surfaceVariant = Color(0xFFEDF2EE),
+    onSurfaceVariant = Color(0xFF404944),
+    outline = Color(0xFF707973),
+    outlineVariant = Color(0xFFDCE3DF)
 )
+
 private val DoseDark = androidx.compose.material3.darkColorScheme(
-    primary = Color(0xFFD0BCFF),
-    primaryContainer = Color(0xFF513B78),
-    background = Color(0xFF141218),
-    surface = Color(0xFF141218)
+    primary = Color(0xFF7FD1A7),
+    onPrimary = Color(0xFF003822),
+    primaryContainer = Color(0xFF124E38),
+    onPrimaryContainer = Color(0xFFA1F2C5),
+    secondary = Color(0xFFB3CCBE),
+    onSecondary = Color(0xFF1E352A),
+    secondaryContainer = Color(0xFF354B40),
+    onSecondaryContainer = Color(0xFFCEE9D9),
+    tertiary = Color(0xFFA2CDE0),
+    background = Color(0xFF111513),
+    onBackground = Color(0xFFE1E3E0),
+    surface = Color(0xFF181E1B),
+    onSurface = Color(0xFFE1E3E0),
+    surfaceVariant = Color(0xFF232B27),
+    onSurfaceVariant = Color(0xFFC0C9C2),
+    outline = Color(0xFF8A938D),
+    outlineVariant = Color(0xFF343D37)
 )
 
 @Composable
@@ -121,19 +158,37 @@ private fun DoseBloomContent(
             item(
                 selected = tab == 0,
                 onClick = { tab = 0 },
-                icon = { Text("●") },
+                icon = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_nav_today),
+                        contentDescription = stringResource(R.string.today),
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
                 label = { Text(stringResource(R.string.today)) }
             )
             item(
                 selected = tab == 1,
                 onClick = { tab = 1 },
-                icon = { Text("▦") },
+                icon = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_nav_history),
+                        contentDescription = stringResource(R.string.history),
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
                 label = { Text(stringResource(R.string.history)) }
             )
             item(
                 selected = tab == 2,
                 onClick = { tab = 2 },
-                icon = { Text("+") },
+                icon = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_nav_medicines),
+                        contentDescription = stringResource(R.string.medicines),
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
                 label = { Text(stringResource(R.string.medicines)) }
             )
         }
@@ -145,21 +200,43 @@ private fun DoseBloomContent(
                         Column {
                             Text(
                                 stringResource(R.string.app_name),
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                Localization.profileDisplayName(activity, profile),
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     },
                     actions = {
-                        TextButton(onClick = { profileDialog = true }) {
-                            Text(stringResource(R.string.profile))
+                        Surface(
+                            onClick = { profileDialog = true },
+                            shape = RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_profile),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    Localization.profileDisplayName(activity, profile),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
-                        TextButton(onClick = { settingsDialog = true }) {
-                            Text("⚙", style = MaterialTheme.typography.titleLarge)
+                        IconButton(onClick = { settingsDialog = true }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_settings),
+                                contentDescription = stringResource(R.string.settings),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -275,30 +352,131 @@ private fun TodayScreen(
         records.filter { "${it.medicineId}-${it.plannedTime}" !in eventKeys }
     }
 
+    val totalDoses = events.size
+    val takenDoses = events.count { (med, time) ->
+        records.any { it.medicineId == med.id && it.plannedTime == time && it.status == "TAKEN" }
+    }
+    val progressPercent = if (totalDoses > 0) (takenDoses * 100 / totalDoses) else 100
+
+    val locale = LocalConfiguration.current.locales[0]
+    val formattedToday = remember(date, locale) {
+        SimpleDateFormat("EEEE, d MMMM", locale).format(Calendar.getInstance().time)
+            .replaceFirstChar { it.uppercase(locale) }
+    }
+
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Text(stringResource(R.string.today), style = MaterialTheme.typography.headlineMedium)
+            Column(Modifier.fillMaxWidth().padding(bottom = 2.dp)) {
+                Text(
+                    formattedToday,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    stringResource(R.string.today),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
+
+        if (totalDoses > 0) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                stringResource(R.string.daily_progress_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                "$progressPercent%",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        LinearProgressIndicator(
+                            progress = { if (totalDoses > 0) takenDoses.toFloat() / totalDoses.toFloat() else 1f },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp)),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surface
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            if (takenDoses == totalDoses) stringResource(R.string.daily_progress_all_done)
+                            else stringResource(R.string.daily_progress_summary, takenDoses, totalDoses, progressPercent),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+        }
+
         if (events.isEmpty() && asNeededMedicines.isEmpty() && asNeededRecords.isEmpty()) {
             item { InfoCard(stringResource(R.string.today_calm_body)) }
         }
+
         items(events, key = { "${it.first.id}-${it.second}" }) { (medicine, time) ->
             val record = records.firstOrNull { it.medicineId == medicine.id && it.plannedTime == time }
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+            Card(
+                Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
+            ) {
                 Column(Modifier.padding(18.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_pill),
+                                contentDescription = null,
+                                modifier = Modifier.padding(6.dp).size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                         Text(time, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.weight(1f))
                         StatusPill(record?.status)
                     }
-                    Text(medicine.name, style = MaterialTheme.typography.titleLarge)
-                    Text("${medicine.dose} ${medicine.unit}")
+                    Spacer(Modifier.height(6.dp))
+                    Text(medicine.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "${medicine.dose} ${medicine.unit}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     if (medicine.note.isNotBlank()) {
-                        Text(medicine.note, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            medicine.note,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
                     if (record == null) {
                         Button(
@@ -306,9 +484,10 @@ private fun TodayScreen(
                                 viewModel.takeDose(medicine.id, date, time)
                                 onWidgetRefresh()
                             },
-                            modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
                         ) {
-                            Text(stringResource(R.string.take))
+                            Text(stringResource(R.string.take), fontWeight = FontWeight.SemiBold)
                         }
                     } else {
                         Row(
@@ -337,20 +516,30 @@ private fun TodayScreen(
                 )
             }
             items(asNeededMedicines, key = { "asneeded-${it.id}" }) { medicine ->
-                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                Card(
+                    Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(Modifier.weight(1f)) {
                             Text(medicine.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Text("${medicine.dose} ${medicine.unit} · ${stringResource(R.string.remaining_stock, medicine.stock, medicine.lowStock)}")
+                            Text(
+                                "${medicine.dose} ${medicine.unit} · ${stringResource(R.string.remaining_stock, medicine.stock, medicine.lowStock)}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         FilledTonalButton(
                             onClick = {
                                 viewModel.takeAsNeeded(medicine.id)
                                 onWidgetRefresh()
-                            }
+                            },
+                            shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(stringResource(R.string.take_as_needed))
                         }
@@ -370,11 +559,16 @@ private fun TodayScreen(
             }
             items(asNeededRecords, key = { "extra-${it.id}" }) { record ->
                 val name = medicines.firstOrNull { it.id == record.medicineId }?.name ?: stringResource(R.string.medicine_fallback)
-                Card(Modifier.fillMaxWidth()) {
+                Card(
+                    Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                ) {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(record.plannedTime, fontWeight = FontWeight.SemiBold)
-                            Text(name)
+                            Text(name, style = MaterialTheme.typography.bodyMedium)
                         }
                         StatusPill(record.status)
                         Spacer(Modifier.width(8.dp))
@@ -420,48 +614,87 @@ private fun HistoryScreen(
     val recordDates = remember(records) { records.map { it.date }.toSet() }
     val locale = LocalConfiguration.current.locales[0]
 
+    val takenMonthCount = remember(records) { records.count { it.status == "TAKEN" } }
+    val totalMonthRecords = remember(records) { records.size }
+    val adherencePercent = if (totalMonthRecords > 0) (takenMonthCount * 100 / totalMonthRecords) else 100
+
     Column(modifier.padding(horizontal = 16.dp).verticalScroll(rememberScrollState())) {
         Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.history), style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(R.string.history), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
-            TextButton(onClick = {
+            IconButton(onClick = {
                 month = (month.clone() as Calendar).apply {
                     add(Calendar.MONTH, -1)
                     set(Calendar.DAY_OF_MONTH, 1)
                 }
                 selectedDate = Schedule.dateKey(month)
             }) {
-                Text("‹", style = MaterialTheme.typography.titleLarge)
+                Icon(
+                    painter = painterResource(R.drawable.ic_chevron_left),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
             }
-            TextButton(onClick = {
+            IconButton(onClick = {
                 month = (month.clone() as Calendar).apply {
                     add(Calendar.MONTH, 1)
                     set(Calendar.DAY_OF_MONTH, 1)
                 }
                 selectedDate = Schedule.dateKey(month)
             }) {
-                Text("›", style = MaterialTheme.typography.titleLarge)
+                Icon(
+                    painter = painterResource(R.drawable.ic_chevron_right),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
         val monthName = remember(year, monthIndex, locale) {
             SimpleDateFormat("LLLL yyyy", locale).format(month.time).replaceFirstChar { it.uppercase(locale) }
         }
-        Text(monthName, style = MaterialTheme.typography.titleLarge)
+        Text(monthName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(10.dp))
-        MonthCalendar(month, selectedDate, recordDates) { selectedDate = it }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    stringResource(R.string.history_month_summary, takenMonthCount, adherencePercent),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
         Spacer(Modifier.height(12.dp))
+        MonthCalendar(month, selectedDate, recordDates) { selectedDate = it }
+        Spacer(Modifier.height(16.dp))
         val selectedRecords = records.filter { it.date == selectedDate }
-        Text(selectedDate.replace('-', '.'), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(selectedDate.replace('-', '.'), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(4.dp))
         if (selectedRecords.isEmpty()) {
             InfoCard(stringResource(R.string.no_records_for_day))
         } else {
             selectedRecords.forEach { record ->
                 val name = medicines.firstOrNull { it.id == record.medicineId }?.name ?: stringResource(R.string.medicine_fallback)
-                Card(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                Card(
+                    Modifier.fillMaxWidth().padding(top = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+                ) {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(record.plannedTime, fontWeight = FontWeight.SemiBold)
-                            Text(name)
+                            Text(record.plannedTime, fontWeight = FontWeight.Bold)
+                            Text(name, style = MaterialTheme.typography.bodyMedium)
                         }
                         StatusPill(record.status)
                         Spacer(Modifier.width(8.dp))
@@ -497,7 +730,9 @@ private fun MonthCalendar(
                 it,
                 Modifier.weight(1f).padding(vertical = 4.dp),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.labelMedium
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -506,9 +741,9 @@ private fun MonthCalendar(
     val days = month.getActualMaximum(Calendar.DAY_OF_MONTH)
     val total = ((offset + days + 6) / 7) * 7
 
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         for (weekStart in 0 until total step 7) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 for (cell in weekStart until weekStart + 7) {
                     val day = cell - offset + 1
                     if (day !in 1..days) {
@@ -522,18 +757,24 @@ private fun MonthCalendar(
                             onClick = { onDateSelected(key) },
                             modifier = Modifier.weight(1f).aspectRatio(1f),
                             color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                            shape = RoundedCornerShape(10.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            border = if (selected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                         ) {
                             Column(
-                                Modifier.fillMaxSize().padding(vertical = 5.dp),
+                                Modifier.fillMaxSize().padding(vertical = 4.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                Text(day.toString(), fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+                                Text(
+                                    day.toString(),
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
                                 Text(
                                     if (hasRecord) "•" else " ",
                                     color = MaterialTheme.colorScheme.primary,
-                                    style = MaterialTheme.typography.labelSmall
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleMedium
                                 )
                             }
                         }
@@ -556,56 +797,208 @@ private fun MedicinesScreen(
     onAdd: () -> Unit,
     onEdit: (Medicine) -> Unit
 ) {
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var filterType by rememberSaveable { mutableIntStateOf(0) }
+
+    val filteredMedicines = remember(medicines, searchQuery, filterType) {
+        medicines.filter { med ->
+            val matchesQuery = searchQuery.isBlank() ||
+                med.name.contains(searchQuery, ignoreCase = true) ||
+                med.note.contains(searchQuery, ignoreCase = true)
+            val matchesFilter = when (filterType) {
+                1 -> !med.asNeeded
+                2 -> med.asNeeded
+                3 -> med.stock <= med.lowStock
+                else -> true
+            }
+            matchesQuery && matchesFilter
+        }
+    }
+
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
             Column(Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.medicines), style = MaterialTheme.typography.headlineMedium)
+                Text(stringResource(R.string.medicines), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text(stringResource(R.string.search_medicines_hint)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_search),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Text("×", style = MaterialTheme.typography.titleLarge)
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 Spacer(Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = filterType == 0,
+                        onClick = { filterType = 0 },
+                        label = { Text(stringResource(R.string.filter_all)) },
+                        shape = RoundedCornerShape(50)
+                    )
+                    FilterChip(
+                        selected = filterType == 1,
+                        onClick = { filterType = 1 },
+                        label = { Text(stringResource(R.string.filter_scheduled)) },
+                        shape = RoundedCornerShape(50)
+                    )
+                    FilterChip(
+                        selected = filterType == 2,
+                        onClick = { filterType = 2 },
+                        label = { Text(stringResource(R.string.filter_as_needed)) },
+                        shape = RoundedCornerShape(50)
+                    )
+                    FilterChip(
+                        selected = filterType == 3,
+                        onClick = { filterType = 3 },
+                        label = { Text(stringResource(R.string.filter_low_stock)) },
+                        shape = RoundedCornerShape(50)
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onExport, Modifier.weight(1f)) {
+                    OutlinedButton(onClick = onExport, Modifier.weight(1f), shape = RoundedCornerShape(12.dp)) {
                         Text(stringResource(R.string.export))
                     }
-                    OutlinedButton(onClick = onImport, Modifier.weight(1f)) {
+                    OutlinedButton(onClick = onImport, Modifier.weight(1f), shape = RoundedCornerShape(12.dp)) {
                         Text(stringResource(R.string.import_data))
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                FilledTonalButton(onClick = onAdd, Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.add_medicine))
+                FilledTonalButton(onClick = onAdd, Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+                    Text(stringResource(R.string.add_medicine), fontWeight = FontWeight.SemiBold)
                 }
             }
         }
-        if (medicines.isEmpty()) {
-            item { InfoCard(stringResource(R.string.medicines_empty)) }
+
+        if (filteredMedicines.isEmpty()) {
+            item {
+                InfoCard(if (searchQuery.isNotBlank() || filterType != 0) stringResource(R.string.no_records_for_day) else stringResource(R.string.medicines_empty))
+            }
         }
-        items(medicines, key = { it.id }) { medicine ->
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text(medicine.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                    Text("${medicine.dose} ${medicine.unit}")
-                    if (!medicine.asNeeded) {
-                        Text(medicine.times.joinToString(", "))
+
+        items(filteredMedicines, key = { it.id }) { medicine ->
+            Card(
+                Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
+            ) {
+                Column(Modifier.padding(18.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_pill),
+                                contentDescription = null,
+                                modifier = Modifier.padding(6.dp).size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Text(medicine.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     }
-                    Text(stringResource(R.string.remaining_stock, medicine.stock, medicine.lowStock))
-                    if (medicine.stock <= medicine.lowStock) {
-                        Text(stringResource(R.string.low_stock), color = MaterialTheme.colorScheme.error)
+                    Spacer(Modifier.height(4.dp))
+                    Text("${medicine.dose} ${medicine.unit}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (!medicine.asNeeded && medicine.times.isNotEmpty()) {
+                        Text(medicine.times.joinToString(", "), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                     }
+
+                    Spacer(Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            stringResource(R.string.remaining_stock, medicine.stock, medicine.lowStock),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (medicine.stock <= medicine.lowStock) {
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                stringResource(R.string.low_stock),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        Text(
+                            stringResource(R.string.restock) + ":",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        listOf(10, 30, 50).forEach { amount ->
+                            Surface(
+                                onClick = {
+                                    viewModel.restock(medicine.id, amount)
+                                    onWidgetRefresh()
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                            ) {
+                                Text(
+                                    stringResource(R.string.restock_amount, amount),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
                     if (medicine.asNeeded) {
                         FilledTonalButton(
                             onClick = {
                                 viewModel.takeAsNeeded(medicine.id)
                                 onWidgetRefresh()
                             },
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
                         ) {
                             Text(stringResource(R.string.take_as_needed))
                         }
                     }
-                    Row(modifier = Modifier.padding(top = 4.dp)) {
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
                         TextButton(onClick = { onEdit(medicine) }) {
                             Text(stringResource(R.string.edit))
                         }
@@ -614,7 +1007,7 @@ private fun MedicinesScreen(
                             Scheduler.rescheduleAll(activity)
                             onWidgetRefresh()
                         }) {
-                            Text(stringResource(R.string.delete))
+                            Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -650,8 +1043,12 @@ private fun MedicineEditor(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
         title = {
-            Text(if (existing == null) stringResource(R.string.new_medicine) else stringResource(R.string.edit_medicine))
+            Text(
+                if (existing == null) stringResource(R.string.new_medicine) else stringResource(R.string.edit_medicine),
+                fontWeight = FontWeight.Bold
+            )
         },
         text = {
             Column(
@@ -659,78 +1056,103 @@ private fun MedicineEditor(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
                     .imePadding(),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedTextField(
                     name,
                     { name = it },
                     label = { Text(stringResource(R.string.name)) },
-                    singleLine = true
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    dose,
-                    { dose = it },
-                    label = { Text(stringResource(R.string.dose)) },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    unit,
-                    { unit = it },
-                    label = { Text(stringResource(R.string.unit)) },
-                    singleLine = true
-                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        dose,
+                        { dose = it },
+                        label = { Text(stringResource(R.string.dose)) },
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        unit,
+                        { unit = it },
+                        label = { Text(stringResource(R.string.unit)) },
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
                 OutlinedTextField(
                     times,
                     { times = it },
                     enabled = !asNeeded,
                     label = { Text(stringResource(R.string.time_example)) },
-                    singleLine = true
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    start,
-                    { start = it },
-                    label = { Text(stringResource(R.string.start_date)) },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    end,
-                    { end = it },
-                    label = { Text(stringResource(R.string.end_date)) },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    stock,
-                    { stock = it.filter(Char::isDigit) },
-                    label = { Text(stringResource(R.string.stock)) },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    low,
-                    { low = it.filter(Char::isDigit) },
-                    label = { Text(stringResource(R.string.low_stock_threshold)) },
-                    singleLine = true
-                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        start,
+                        { start = it },
+                        label = { Text(stringResource(R.string.start_date)) },
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        end,
+                        { end = it },
+                        label = { Text(stringResource(R.string.end_date)) },
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        stock,
+                        { stock = it.filter(Char::isDigit) },
+                        label = { Text(stringResource(R.string.stock)) },
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        low,
+                        { low = it.filter(Char::isDigit) },
+                        label = { Text(stringResource(R.string.low_stock_threshold)) },
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
                 OutlinedTextField(
                     note,
                     { note = it },
-                    label = { Text(stringResource(R.string.note)) }
+                    label = { Text(stringResource(R.string.note)) },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
                 )
                 Row(
-                    Modifier.fillMaxWidth(),
+                    Modifier.fillMaxWidth().padding(top = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(stringResource(R.string.as_needed))
+                    Text(stringResource(R.string.as_needed), fontWeight = FontWeight.Medium)
                     Switch(asNeeded, { asNeeded = it })
                 }
                 if (error.isNotBlank()) {
-                    Text(error, color = MaterialTheme.colorScheme.error)
+                    Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
             }
         },
         confirmButton = {
             Button(
                 enabled = name.isNotBlank(),
+                shape = RoundedCornerShape(12.dp),
                 onClick = {
                     val parsed = times.split(",")
                         .map(String::trim)
@@ -762,7 +1184,7 @@ private fun MedicineEditor(
                     }
                 }
             ) {
-                Text(stringResource(R.string.save))
+                Text(stringResource(R.string.save), fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
@@ -785,32 +1207,55 @@ private fun ProfileDialog(
     var name by rememberSaveable { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = { onSelect(current) },
-        title = { Text(stringResource(R.string.profile)) },
+        shape = RoundedCornerShape(24.dp),
+        title = { Text(stringResource(R.string.profile), fontWeight = FontWeight.Bold) },
         text = {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 profiles.forEach { p ->
                     val displayName = Localization.profileDisplayName(activity, p)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(onClick = { onSelect(p) }, Modifier.weight(1f)) {
-                            Text(if (p == current) "✓ $displayName" else displayName)
-                        }
-                        if (p != "Я") {
-                            TextButton(onClick = { onDelete(p) }) {
-                                Text(stringResource(R.string.delete))
+                    Surface(
+                        onClick = { onSelect(p) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (p == current) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_profile),
+                                contentDescription = null,
+                                tint = if (p == current) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp).padding(end = 8.dp)
+                            )
+                            Text(
+                                displayName,
+                                Modifier.weight(1f),
+                                fontWeight = if (p == current) FontWeight.Bold else FontWeight.Normal
+                            )
+                            if (p != "Я") {
+                                IconButton(onClick = { onDelete(p) }, modifier = Modifier.size(28.dp)) {
+                                    Text("×", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
+                                }
                             }
                         }
                     }
                 }
-                HorizontalDivider()
+                HorizontalDivider(Modifier.padding(vertical = 6.dp))
                 OutlinedTextField(
                     name,
                     { name = it },
                     label = { Text(stringResource(R.string.new_profile)) },
-                    singleLine = true
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                TextButton(
+                Button(
                     enabled = name.isNotBlank(),
-                    onClick = { onAdd(name); name = "" }
+                    onClick = { onAdd(name); name = "" },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                 ) {
                     Text(stringResource(R.string.add_and_select))
                 }
@@ -834,16 +1279,23 @@ private fun SettingsDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings)) },
+        shape = RoundedCornerShape(24.dp),
+        title = { Text(stringResource(R.string.settings), fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(stringResource(R.string.dark_theme))
-                    Switch(dark, onDarkMode)
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(stringResource(R.string.dark_theme), fontWeight = FontWeight.Medium)
+                        Switch(dark, onDarkMode)
+                    }
                 }
                 HorizontalDivider()
                 val currentLangLabel = when (language) {
@@ -851,14 +1303,30 @@ private fun SettingsDialog(
                     Localization.ENGLISH -> stringResource(R.string.english)
                     else -> stringResource(R.string.system_default)
                 }
-                Text("${stringResource(R.string.language)}: $currentLangLabel")
-                OutlinedButton(onClick = { onLanguage(Localization.SYSTEM) }, Modifier.fillMaxWidth()) {
+                Text(
+                    "${stringResource(R.string.language)}: $currentLangLabel",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                OutlinedButton(
+                    onClick = { onLanguage(Localization.SYSTEM) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
                     Text(stringResource(R.string.system_default))
                 }
-                OutlinedButton(onClick = { onLanguage(Localization.RUSSIAN) }, Modifier.fillMaxWidth()) {
+                OutlinedButton(
+                    onClick = { onLanguage(Localization.RUSSIAN) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
                     Text(stringResource(R.string.russian))
                 }
-                OutlinedButton(onClick = { onLanguage(Localization.ENGLISH) }, Modifier.fillMaxWidth()) {
+                OutlinedButton(
+                    onClick = { onLanguage(Localization.ENGLISH) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
                     Text(stringResource(R.string.english))
                 }
             }
@@ -873,27 +1341,60 @@ private fun SettingsDialog(
 
 @Composable
 private fun StatusPill(status: String?) {
+    val isTaken = status == "TAKEN"
+    val isSkipped = status == "SKIPPED"
+    val bgColor = when {
+        isTaken -> if (MaterialTheme.colorScheme.background.red < 0.5f) Color(0xFF1B3824) else Color(0xFFE8F5E9)
+        isSkipped -> MaterialTheme.colorScheme.surfaceVariant
+        else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+    }
+    val contentColor = when {
+        isTaken -> if (MaterialTheme.colorScheme.background.red < 0.5f) Color(0xFFA5D6A7) else Color(0xFF1B5E20)
+        isSkipped -> MaterialTheme.colorScheme.onSurfaceVariant
+        else -> MaterialTheme.colorScheme.onPrimaryContainer
+    }
+    val label = when {
+        isTaken -> stringResource(R.string.status_taken)
+        isSkipped -> stringResource(R.string.status_skipped)
+        else -> stringResource(R.string.planned)
+    }
     Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
-        shape = RoundedCornerShape(50)
+        color = bgColor,
+        shape = RoundedCornerShape(50),
+        border = BorderStroke(1.dp, contentColor.copy(alpha = 0.25f))
     ) {
-        val label = when (status) {
-            "TAKEN" -> stringResource(R.string.status_taken)
-            "SKIPPED" -> stringResource(R.string.status_skipped)
-            else -> stringResource(R.string.planned)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            if (isTaken) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_check_circle),
+                    contentDescription = null,
+                    tint = contentColor,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+            Text(
+                label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor
+            )
         }
-        Text(
-            label,
-            Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-            style = MaterialTheme.typography.labelMedium
-        )
     }
 }
 
 @Composable
 private fun InfoCard(text: String) {
-    Card(Modifier.fillMaxWidth()) {
-        Text(text, Modifier.padding(18.dp))
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Text(text, Modifier.padding(18.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
