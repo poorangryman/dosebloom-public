@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 
 object Scheduler {
-    private const val DAYS = 30
+    private const val DAYS = 7
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     @Volatile private var applicationContext: Context? = null
 

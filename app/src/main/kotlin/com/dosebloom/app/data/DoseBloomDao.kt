@@ -35,6 +35,9 @@ interface MedicineDao {
 
     @Query("UPDATE medicines SET stock = CASE WHEN stock > 0 THEN stock - 1 ELSE 0 END WHERE id = :id")
     suspend fun decreaseStock(id: Long)
+
+    @Query("UPDATE medicines SET stock = stock + 1 WHERE id = :id")
+    suspend fun increaseStock(id: Long)
 }
 
 @Dao
@@ -54,8 +57,14 @@ interface IntakeDao {
     @Query("SELECT EXISTS(SELECT 1 FROM intakes WHERE medicineId = :medicineId AND date = :date AND plannedTime = :time)")
     suspend fun exists(medicineId: Long, date: String, time: String): Boolean
 
+    @Query("SELECT * FROM intakes WHERE medicineId = :medicineId AND date = :date AND plannedTime = :time LIMIT 1")
+    suspend fun find(medicineId: Long, date: String, time: String): IntakeEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: IntakeEntity): Long
+
+    @Query("DELETE FROM intakes WHERE medicineId = :medicineId AND date = :date AND plannedTime = :time")
+    suspend fun delete(medicineId: Long, date: String, time: String): Int
 
     @Query("DELETE FROM intakes WHERE medicineId = :medicineId")
     suspend fun deleteForMedicine(medicineId: Long)

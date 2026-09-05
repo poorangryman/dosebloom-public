@@ -42,6 +42,7 @@ class NextDoseWidget : AppWidgetProvider() {
                     val day = (now.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, offset) }
                     val date = Schedule.dateKey(day)
                     for ((medicine, time) in Schedule.events(medicineList, date)) {
+                        if (repository.hasIntake(medicine.id, date, time)) continue
                         val p = time.split(":")
                         val alarm = (day.clone() as Calendar).apply {
                             set(Calendar.HOUR_OF_DAY, p[0].toInt())
@@ -56,6 +57,15 @@ class NextDoseWidget : AppWidgetProvider() {
                     }
                 }
                 val views = RemoteViews(app.packageName, R.layout.widget_next_dose)
+                val openAppIntent = android.app.PendingIntent.getActivity(
+                    app,
+                    0,
+                    android.content.Intent(app, RefactoredMainActivity::class.java).apply {
+                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    },
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                )
+                views.setOnClickPendingIntent(R.id.widget_root, openAppIntent)
                 val item = found
                 if (item == null) {
                     views.setTextViewText(R.id.widget_title, app.getString(R.string.app_name))

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -188,7 +189,7 @@ private fun DoseBloomContent(
                     ) { targetTab ->
                         when (targetTab) {
                             0 -> TodayScreen(viewModel, medicines, onWidgetRefresh, Modifier.fillMaxSize())
-                            1 -> HistoryScreen(viewModel, medicines, Modifier.fillMaxSize())
+                            1 -> HistoryScreen(viewModel, medicines, onWidgetRefresh, Modifier.fillMaxSize())
                             else -> MedicinesScreen(
                                 viewModel,
                                 medicines,
@@ -268,6 +269,11 @@ private fun TodayScreen(
     val date = Schedule.todayKey()
     val records by remember(date) { viewModel.observeIntakes(date) }.collectAsStateWithLifecycle()
     val events = remember(medicines, date) { Schedule.events(medicines, date) }
+    val asNeededMedicines = remember(medicines) { medicines.filter { it.asNeeded } }
+    val asNeededRecords = remember(records, events) {
+        val eventKeys = events.map { "${it.first.id}-${it.second}" }.toSet()
+        records.filter { "${it.medicineId}-${it.plannedTime}" !in eventKeys }
+    }
 
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp),
@@ -277,7 +283,7 @@ private fun TodayScreen(
         item {
             Text(stringResource(R.string.today), style = MaterialTheme.typography.headlineMedium)
         }
-        if (events.isEmpty()) {
+        if (events.isEmpty() && asNeededMedicines.isEmpty() && asNeededRecords.isEmpty()) {
             item { InfoCard(stringResource(R.string.today_calm_body)) }
         }
         items(events, key = { "${it.first.id}-${it.second}" }) { (medicine, time) ->
@@ -304,6 +310,80 @@ private fun TodayScreen(
                         ) {
                             Text(stringResource(R.string.take))
                         }
+                    } else {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            TextButton(onClick = {
+                                viewModel.undoDose(medicine.id, date, time)
+                                onWidgetRefresh()
+                            }) {
+                                Text(stringResource(R.string.undo))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (asNeededMedicines.isNotEmpty()) {
+            item {
+                Text(
+                    stringResource(R.string.as_needed),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+            items(asNeededMedicines, key = { "asneeded-${it.id}" }) { medicine ->
+                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(medicine.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Text("${medicine.dose} ${medicine.unit} · ${stringResource(R.string.remaining_stock, medicine.stock, medicine.lowStock)}")
+                        }
+                        FilledTonalButton(
+                            onClick = {
+                                viewModel.takeAsNeeded(medicine.id)
+                                onWidgetRefresh()
+                            }
+                        ) {
+                            Text(stringResource(R.string.take_as_needed))
+                        }
+                    }
+                }
+            }
+        }
+
+        if (asNeededRecords.isNotEmpty()) {
+            item {
+                Text(
+                    stringResource(R.string.intakes),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+            items(asNeededRecords, key = { "extra-${it.id}" }) { record ->
+                val name = medicines.firstOrNull { it.id == record.medicineId }?.name ?: stringResource(R.string.medicine_fallback)
+                Card(Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(record.plannedTime, fontWeight = FontWeight.SemiBold)
+                            Text(name)
+                        }
+                        StatusPill(record.status)
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = {
+                            viewModel.undoDose(record.medicineId, record.date, record.plannedTime)
+                            onWidgetRefresh()
+                        }) {
+                            Text(stringResource(R.string.undo))
+                        }
                     }
                 }
             }
@@ -315,6 +395,7 @@ private fun TodayScreen(
 private fun HistoryScreen(
     viewModel: DoseBloomViewModel,
     medicines: List<Medicine>,
+    onWidgetRefresh: () -> Unit,
     modifier: Modifier
 ) {
     var month by remember { mutableStateOf(Calendar.getInstance()) }
@@ -383,6 +464,13 @@ private fun HistoryScreen(
                             Text(name)
                         }
                         StatusPill(record.status)
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = {
+                            viewModel.undoDose(record.medicineId, record.date, record.plannedTime)
+                            onWidgetRefresh()
+                        }) {
+                            Text(stringResource(R.string.undo))
+                        }
                     }
                 }
             }
@@ -506,7 +594,18 @@ private fun MedicinesScreen(
                     if (medicine.stock <= medicine.lowStock) {
                         Text(stringResource(R.string.low_stock), color = MaterialTheme.colorScheme.error)
                     }
-                    Row {
+                    if (medicine.asNeeded) {
+                        FilledTonalButton(
+                            onClick = {
+                                viewModel.takeAsNeeded(medicine.id)
+                                onWidgetRefresh()
+                            },
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                        ) {
+                            Text(stringResource(R.string.take_as_needed))
+                        }
+                    }
+                    Row(modifier = Modifier.padding(top = 4.dp)) {
                         TextButton(onClick = { onEdit(medicine) }) {
                             Text(stringResource(R.string.edit))
                         }

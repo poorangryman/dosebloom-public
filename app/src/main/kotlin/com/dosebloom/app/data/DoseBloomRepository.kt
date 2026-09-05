@@ -38,6 +38,9 @@ class DoseBloomRepository(private val database: DoseBloomDatabase) {
         }
     }
 
+    suspend fun hasIntake(medicineId: Long, date: String, time: String): Boolean =
+        intakes.exists(medicineId, date, time)
+
     suspend fun takeDose(medicineId: Long, date: String, time: String, actualMillis: Long = System.currentTimeMillis()): Boolean =
         database.withTransaction {
             if (intakes.exists(medicineId, date, time)) return@withTransaction false
@@ -53,6 +56,19 @@ class DoseBloomRepository(private val database: DoseBloomDatabase) {
             if (status == IntakeStatus.TAKEN) medicines.decreaseStock(medicineId)
             true
         }
+
+    suspend fun undoDose(medicineId: Long, date: String, time: String): Boolean =
+        database.withTransaction {
+            val existing = intakes.find(medicineId, date, time) ?: return@withTransaction false
+            intakes.delete(medicineId, date, time)
+            if (existing.status == IntakeStatus.TAKEN.storageValue) {
+                medicines.increaseStock(medicineId)
+            }
+            true
+        }
+
+    suspend fun takeAsNeeded(medicineId: Long, date: String = com.dosebloom.app.Schedule.todayKey(), time: String = com.dosebloom.app.Schedule.nowTime()): Boolean =
+        takeDose(medicineId, date, time)
 }
 
 enum class IntakeStatus(val storageValue: String) {
