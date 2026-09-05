@@ -29,8 +29,8 @@ class RefactoredMainActivity : ComponentActivity() {
     private val importLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) lifecycleScope.launch(Dispatchers.IO) {
             runCatching { exportImportService.import(uri) }
-                .onSuccess { runOnUiThread { Scheduler.rescheduleAll(this@RefactoredMainActivity); refreshWidget(); Toast.makeText(this@RefactoredMainActivity, "Импорт завершён", Toast.LENGTH_SHORT).show() } }
-                .onFailure { error -> runOnUiThread { Toast.makeText(this@RefactoredMainActivity, "Импорт не выполнен: ${error.message ?: "неизвестная ошибка"}", Toast.LENGTH_LONG).show() } }
+                .onSuccess { runOnUiThread { Scheduler.rescheduleAll(this@RefactoredMainActivity); refreshWidget(); Toast.makeText(this@RefactoredMainActivity, getString(R.string.import_success), Toast.LENGTH_SHORT).show() } }
+                .onFailure { error -> runOnUiThread { Toast.makeText(this@RefactoredMainActivity, getString(R.string.import_error, error.message ?: ""), Toast.LENGTH_LONG).show() } }
         }
     }
 
@@ -54,7 +54,7 @@ class RefactoredMainActivity : ComponentActivity() {
     }
 
     private fun exportData() {
-        pendingExport = { uri -> lifecycleScope.launch { runCatching { exportImportService.export(uri) }.onFailure { error -> Toast.makeText(this@RefactoredMainActivity, "Экспорт не выполнен: ${error.message ?: "неизвестная ошибка"}", Toast.LENGTH_LONG).show() } } }
+        pendingExport = { uri -> lifecycleScope.launch { runCatching { exportImportService.export(uri) }.onFailure { error -> Toast.makeText(this@RefactoredMainActivity, getString(R.string.export_error, error.message ?: ""), Toast.LENGTH_LONG).show() } } }
         exportLauncher.launch("DoseBloom-${Schedule.todayKey()}.json")
     }
 
