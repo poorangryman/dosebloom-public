@@ -31,16 +31,18 @@ The main idea is simple: create medication schedules, record doses, and use remi
 ### Features
 
 - Create and manage medication schedules
-- Track today's doses and review medication history with a calendar
-- Record taken and skipped doses
+- Track today's doses with a daily adherence progress card
+- Review medication history and adherence with a calendar
+- Record taken and skipped doses, and undo accidental intakes
 - Medication courses with start and end dates
-- As-needed medications
-- Medication stock tracking and low-stock warnings
+- As-needed medications with a "Take now" button
+- Medication stock tracking with low-stock warnings and quick restock (+10, +30, +50)
+- Live search and filter chips (All, Scheduled, As needed, Low stock) in the medicines list
 - Multiple user profiles
 - Notifications and scheduled reminders
 - Notification actions: **Taken**, **+10 min**, and **Skip**
 - Automatic schedule restoration after device reboot and time/time-zone changes
-- Home-screen widget showing the next scheduled dose for the active profile
+- Home-screen widget showing the next scheduled dose (clicking opens the app)
 - JSON data export and import, including actual intake history
 - Light and dark theme with adapted semantic status and calendar colors
 - Scrollable medication add/edit form for small screens

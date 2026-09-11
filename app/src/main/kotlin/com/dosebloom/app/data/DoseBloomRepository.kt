@@ -68,7 +68,15 @@ class DoseBloomRepository(private val database: DoseBloomDatabase) {
         }
 
     suspend fun takeAsNeeded(medicineId: Long, date: String = com.dosebloom.app.Schedule.todayKey(), time: String = com.dosebloom.app.Schedule.nowTime()): Boolean =
-        takeDose(medicineId, date, time)
+        database.withTransaction {
+            var attemptTime = time
+            var counter = 2
+            while (intakes.exists(medicineId, date, attemptTime)) {
+                attemptTime = "$time ($counter)"
+                counter++
+            }
+            takeDose(medicineId, date, attemptTime)
+        }
 
     suspend fun restock(medicineId: Long, amount: Int) {
         if (amount > 0) medicines.addStock(medicineId, amount)

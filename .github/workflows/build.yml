@@ -87,7 +87,7 @@ jobs:
           EOF
 
       - name: Build release APK
-        run: gradle --no-daemon assembleRelease
+        run: gradle --no-daemon testDebugUnitTest assembleRelease
 
       - name: Verify APK signature
         run: |
