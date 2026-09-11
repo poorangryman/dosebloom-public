@@ -1,184 +1,63 @@
 # DoseBloom
 
-**A simple, private Android medication tracker.**
+[🇬🇧 English](#english-version) | [🇷🇺 Русский](#русская-версия)
 
-I want to start with an honest disclaimer: **I have no professional experience in Android application development.**
+---
 
-DoseBloom was created as a personal project for my own needs. I wanted a straightforward way to keep track of medications and scheduled doses without unnecessary complexity, advertising, subscriptions, or mandatory cloud services.
+<a name="english-version"></a>
+## 🇬🇧 DoseBloom: Simple Android Medication Tracker & Pill Reminder
 
-So I decided to make one myself.
+**DoseBloom** is a lightweight, private, and open-source Android application for tracking medications and scheduled doses locally on your device. 
 
-I relied **heavily on ChatGPT throughout the development process** — from the initial project structure and implementation to debugging, UI improvements, and solving Android-specific issues. This is my first serious Android application, so experienced developers will almost certainly find things that could be done better.
+Designed for users who need a straightforward way to keep track of pill schedules without unnecessary complexity, advertising, subscriptions, or mandatory cloud services.
 
-I'm publishing the project openly because I thought it might be useful to someone else as well. I'm also hoping that people with more experience can help me improve it.
+### Key Features
+- **Pill Schedules & Reminders**: Create medication courses, get exact alarm notifications, and record taken/skipped doses.
+- **Daily Adherence Tracking**: Track today's doses with an animated progress card and review monthly adherence via the built-in calendar.
+- **Inventory Management**: Track medication stock with low-stock warnings and quick restock buttons (+10, +30, +50).
+- **As-Needed Medications**: Manage PRN (pro re nata) medications with a quick "Take now" button.
+- **Privacy First**: 100% local storage. No accounts required. Complete JSON data export/import (including intake history).
+- **Modern Adaptive UI**: Botanical color palette, edge-to-edge rendering, dark/light themes, and responsive navigation for phones, foldables, and tablets.
+- **Home Screen Widget**: View your next scheduled dose directly from your launcher.
 
-## Current version
+### Development & Technology
+I created DoseBloom for my own needs with heavy assistance from ChatGPT, as this is my first serious Android project. 
 
-**1.4.9** (`versionCode 17`)
+- **Stack**: Kotlin 2.4, Jetpack Compose 1.12, Material 3, Room 2.8 with KSP.
+- **Architecture**: MVI/MVVM with Coroutines, StateFlow, and a clean Repository layer.
+- **Build**: Gradle 9.5, GitHub Actions CI/CD for signed release APKs.
 
-`applicationId`: `com.dosebloom.app`
+### Contributions & Feedback
+Bug reports, feature requests, and pull requests are welcome! If you are an experienced Android developer, constructive feedback on architecture or Compose performance is greatly appreciated.
+[Open a new issue](https://github.com/poorangryman/dosebloom-public/issues/new)
 
-Minimum Android version: **API 26 (Android 8.0)**  
-Target SDK: **37**  
-Compile SDK: **37**
+**Disclaimer**: DoseBloom is a personal tracking tool and is not a substitute for medical advice or professional healthcare.
 
-## What is DoseBloom?
+---
 
-DoseBloom is a lightweight Android application for tracking medications and scheduled doses locally on your device.
+<a name="русская-версия"></a>
+## 🇷🇺 DoseBloom: Простой трекер приема лекарств для Android
 
-The main idea is simple: create medication schedules, record doses, and use reminders to keep track of what has been taken.
+**DoseBloom** — это легкое, приватное приложение с открытым исходным кодом для отслеживания графика приема таблеток и лекарств прямо на вашем устройстве.
 
-### Features
+Создано для тех, кому нужна простая и понятная таблетница без рекламы, платных подписок, перегруженного интерфейса и обязательной регистрации в облаке.
 
-- Create and manage medication schedules
-- Track today's doses with a daily adherence progress card
-- Review medication history and adherence with a calendar
-- Record taken and skipped doses, and undo accidental intakes
-- Medication courses with start and end dates
-- As-needed medications with a "Take now" button
-- Medication stock tracking with low-stock warnings and quick restock (+10, +30, +50)
-- Live search and filter chips (All, Scheduled, As needed, Low stock) in the medicines list
-- Multiple user profiles
-- Notifications and scheduled reminders
-- Notification actions: **Taken**, **+10 min**, and **Skip**
-- Automatic schedule restoration after device reboot and time/time-zone changes
-- Home-screen widget showing the next scheduled dose (clicking opens the app)
-- JSON data export and import, including actual intake history
-- Light and dark theme with adapted semantic status and calendar colors
-- Scrollable medication add/edit form for small screens
-- Responsive medication actions that do not allow the add button text to wrap vertically
-- Russian and English language support
-- In-app language selection with a system-default option
-- No mandatory account or cloud service
-- No advertising
+### Основные возможности
+- **Расписание и напоминания**: Создавайте курсы приема, получайте точные уведомления и отмечайте выпитые или пропущенные дозы (с возможностью отмены случайного клика).
+- **Прогресс и статистика**: Следите за выполнением плана на сегодня с помощью виджета прогресса и просматривайте историю в календаре.
+- **Контроль запасов**: Приложение предупредит, когда таблетки заканчиваются. Быстрое пополнение запасов в один клик (+10, +30, +50).
+- **Прием "по необходимости"**: Отдельный режим для лекарств без жесткого графика с кнопкой «Принять сейчас».
+- **Полная приватность**: Все данные хранятся только на телефоне. Поддерживается полный бэкап и перенос данных в формате JSON.
+- **Современный интерфейс**: Адаптивный Material 3 дизайн, поддержка тёмной темы, планшетов и экранов с вырезами. Удобный виджет для рабочего стола.
 
-### Adaptive UI and system insets
+### Технологии и разработка
+Проект разрабатывался для личного использования при активной помощи ChatGPT. 
 
-DoseBloom uses Jetpack Compose's adaptive Material navigation and Android window insets rather than device-specific screen dimensions. The application enables edge-to-edge rendering, uses Material 3 components that handle system-bar and display-cutout insets, and applies `adjustResize` for the on-screen keyboard.
+- **Стек**: Kotlin 2.4, Jetpack Compose, Material 3, Room (KSP), Coroutines/Flow.
+- **Сборка**: Gradle 9.5, автоматическая публикация релизных APK через GitHub Actions.
 
-The primary navigation switches automatically between a bottom navigation bar on compact windows and an appropriate rail/navigation layout on larger windows. Main content is constrained to a readable width on large displays instead of stretching indefinitely.
+### Обратная связь
+Если вы пользуетесь приложением — буду рад отзывам и баг-репортам. Если вы Android-разработчик — конструктивные пулл-реквесты и советы по архитектуре горячо приветствуются!
+[Открыть issue](https://github.com/poorangryman/dosebloom-public/issues/new)
 
-UI state that cannot be reconstructed from the database, including the selected tab, open editor, calendar selection and medication form input, is saved with Compose's `rememberSaveable` so rotation and window resizing do not discard the user's current work.
-
-This is intended to cover narrow phones, phones with camera cutouts/punch holes, landscape, split-screen, tablets and other resizable Android windows without hard-coded status-bar or camera-notch dimensions.
-
-DoseBloom is a personal tracking tool and **is not a substitute for medical advice, diagnosis, or professional healthcare**. Always follow the instructions provided by your doctor or medication packaging.
-
-## Export and import
-
-DoseBloom can export application data to JSON and restore it through the Android system file picker.
-
-The export format includes:
-
-- user profiles;
-- medications;
-- dosage and units;
-- schedules;
-- course dates;
-- notes;
-- stock and low-stock threshold;
-- as-needed status;
-- actual intake history, including date, planned time, actual time, and status.
-
-Older JSON files without the `intakes` field remain compatible; they simply do not contain intake history to restore.
-
-## Reminders and exact alarms
-
-DoseBloom uses Android `AlarmManager` for scheduled reminders. It attempts to use exact alarms when the required system access is available and falls back to a non-exact alarm when it is not.
-
-On Android 12 and newer, exact alarms require the system's **Alarms & reminders** access. Depending on the Android version and installation state, this access may need to be enabled manually for the most precise reminders.
-
-The application recreates its schedule after device reboot and after time or time-zone changes.
-
-## Widget
-
-DoseBloom includes a home-screen widget that displays the next scheduled dose.
-
-The widget searches for the nearest scheduled dose within the next seven days and uses the profile currently selected in the application.
-
-## Technology
-
-- Kotlin 2.4.10
-- Jetpack Compose 1.12.0 via Compose BOM 2026.08.00
-- Material 3 1.4.0
-- Material 3 Adaptive Navigation Suite 1.3.0
-- AndroidX Core KTX 1.19.0
-- AndroidX AppCompat 1.8.0
-- AndroidX Activity Compose 1.13.0
-- AndroidX Lifecycle 2.11.0
-- Room 2.8.4 with KSP
-- Android `AlarmManager` and `BroadcastReceiver`
-- Android App Widgets
-- JSON export/import
-- Java 17
-- Android Gradle Plugin 9.3.2
-- Gradle 9.5.1
-- Android Build Tools 36.0.0
-- Compile/Target SDK 37
-- GitHub Actions: current stable action majors for checkout, Java, Android SDK, and Gradle setup
-
-Compose dependencies are managed with the official Compose BOM so Compose libraries remain aligned with each other. The Kotlin Compose compiler plugin is kept aligned with the Kotlin version. Room annotation processing uses KSP, compatible with the AGP built-in Kotlin setup.
-
-## Building and releases
-
-Open the project in Android Studio and allow Gradle to synchronize the project.
-
-The public repository uses GitHub Actions to build the signed release APK. The production signing key is **not stored in the repository**. GitHub Actions restores it temporarily from protected repository secrets during a release build and removes the temporary signing files after the build.
-
-The workflow uses the Gradle Wrapper, installs only the Android platform and build-tools required by the project, verifies the APK signature with Android `apksigner`, uploads the signed APK as an artifact, and publishes a GitHub Release using the version from `app/build.gradle.kts`.
-
-The signing key must remain unchanged for future releases. This is required so that Android accepts future APKs as updates to existing installations.
-
-The repository does not contain the release keystore or signing passwords.
-
-## Versioning rule
-
-For every code change:
-
-1. increment `versionName` and `versionCode` when the change is a release-worthy application update;
-2. update this README to the same version;
-3. run the GitHub Actions release build;
-4. verify the APK signature;
-5. publish the GitHub Release.
-
-Technical dependency-only updates that do not change the application version should still update the Technology section and pass the full CI build before merging.
-
-The production signing key must never be committed to the repository.
-
-## Privacy and data
-
-DoseBloom is designed around local data storage. The application does not require an account or mandatory cloud synchronization.
-
-Exported JSON files may contain sensitive medication information. Store exported files securely and do not share them publicly unless you are comfortable disclosing their contents.
-
-## Why does it exist?
-
-I wanted a practical medication tracker that focused on the things I actually needed instead of trying to become a large healthcare platform.
-
-DoseBloom started as a personal project and gradually grew into a complete Android application.
-
-## Community feedback and contributions
-
-If you use DoseBloom, **feedback, bug reports, feature requests, and contributions are welcome**.
-
-- [Open a new issue](https://github.com/poorangryman/dosebloom-public/issues/new)
-
-For bug reports, please include your Android version, device model, DoseBloom version, steps to reproduce the problem, and screenshots or logs when possible.
-
-If you are an Android developer, or have experience with Kotlin/Java, testing, security, architecture, notifications, or UI/UX, constructive suggestions and pull requests are especially welcome.
-
-DoseBloom handles potentially sensitive medication information. Please avoid posting personal medical information, prescriptions, or other private data in public issues.
-
-## A note about the code
-
-This project is my first serious attempt at creating an Android application, and I'm learning as I go.
-
-**ChatGPT was heavily involved in the development of DoseBloom.** The application would not have reached its current state without it.
-
-I'm publishing the source code openly because I believe that sharing a real, imperfect project can be more useful than pretending it was written by an experienced developer from the beginning.
-
-If you're an experienced Android developer and notice something that could be significantly improved, constructive feedback is welcome.
-
-## License
-
-See [LICENSE](LICENSE).
+**Отказ от ответственности**: DoseBloom является вспомогательным инструментом и не заменяет профессиональные медицинские назначения.
