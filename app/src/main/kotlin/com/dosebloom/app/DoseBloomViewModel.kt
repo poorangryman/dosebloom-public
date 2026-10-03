@@ -28,7 +28,7 @@ data class DoseBloomUiState(
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DoseBloomViewModel(
+class DoseBloomViewModel @JvmOverloads constructor(
     application: Application,
     private val repository: DoseBloomRepository = DoseBloomRepository(DoseBloomDatabase.get(application)),
     private val settings: SettingsRepository = SettingsRepository(application)
