@@ -1,5 +1,8 @@
 package com.dosebloom.app
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class Medicine(
     val id: Long = 0,
     val name: String,
@@ -15,6 +18,7 @@ data class Medicine(
     val profile: String
 )
 
+@Immutable
 data class Intake(
     val id: Long,
     val medicineId: Long,

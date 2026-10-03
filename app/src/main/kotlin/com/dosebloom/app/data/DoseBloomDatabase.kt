@@ -36,7 +36,11 @@ abstract class DoseBloomDatabase : RoomDatabase() {
 
         @Volatile private var instance: DoseBloomDatabase? = null
         fun get(context: Context): DoseBloomDatabase = instance ?: synchronized(this) {
-            instance ?: Room.databaseBuilder(context.applicationContext, DoseBloomDatabase::class.java, DATABASE_NAME).addMigrations(MIGRATION_2_3).build().also { instance = it }
+            instance ?: Room.databaseBuilder(context.applicationContext, DoseBloomDatabase::class.java, DATABASE_NAME)
+                .addMigrations(MIGRATION_2_3)
+                .fallbackToDestructiveMigrationFrom(1)
+                .build()
+                .also { instance = it }
         }
     }
 }

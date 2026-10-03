@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -71,52 +72,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-
-private val DoseLight = androidx.compose.material3.lightColorScheme(
-    primary = Color(0xFF2A6B55),
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFD6EFE3),
-    onPrimaryContainer = Color(0xFF04281B),
-    secondary = Color(0xFF4C6357),
-    onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFCEE9D9),
-    onSecondaryContainer = Color(0xFF092016),
-    tertiary = Color(0xFF3B6470),
-    background = Color(0xFFF7F9F8),
-    onBackground = Color(0xFF191C1A),
-    surface = Color(0xFFFFFFFF),
-    onSurface = Color(0xFF191C1A),
-    surfaceVariant = Color(0xFFEDF2EE),
-    onSurfaceVariant = Color(0xFF404944),
-    outline = Color(0xFF707973),
-    outlineVariant = Color(0xFFDCE3DF)
-)
-
-private val DoseDark = androidx.compose.material3.darkColorScheme(
-    primary = Color(0xFF7FD1A7),
-    onPrimary = Color(0xFF003822),
-    primaryContainer = Color(0xFF124E38),
-    onPrimaryContainer = Color(0xFFA1F2C5),
-    secondary = Color(0xFFB3CCBE),
-    onSecondary = Color(0xFF1E352A),
-    secondaryContainer = Color(0xFF354B40),
-    onSecondaryContainer = Color(0xFFCEE9D9),
-    tertiary = Color(0xFFA2CDE0),
-    background = Color(0xFF111513),
-    onBackground = Color(0xFFE1E3E0),
-    surface = Color(0xFF181E1B),
-    onSurface = Color(0xFFE1E3E0),
-    surfaceVariant = Color(0xFF232B27),
-    onSurfaceVariant = Color(0xFFC0C9C2),
-    outline = Color(0xFF8A938D),
-    outlineVariant = Color(0xFF343D37)
-)
 
 @Composable
 @OptIn(ExperimentalMaterial3AdaptiveNavigationSuiteApi::class, ExperimentalMaterial3Api::class)
@@ -128,7 +90,7 @@ fun DoseBloomScreen(
     onWidgetRefresh: () -> Unit
 ) {
     val dark by viewModel.darkMode.collectAsStateWithLifecycle()
-    MaterialTheme(colorScheme = if (dark) DoseDark else DoseLight) {
+    DoseBloomTheme(darkTheme = dark) {
         DoseBloomContent(activity, viewModel, onExport, onImport, onWidgetRefresh)
     }
 }
@@ -347,7 +309,7 @@ private fun TodayScreen(
     modifier: Modifier
 ) {
     val date = Schedule.todayKey()
-    val records by remember(date) { viewModel.observeIntakes(date) }.collectAsStateWithLifecycle()
+    val records by remember(date) { viewModel.observeIntakes(date) }.collectAsStateWithLifecycle(emptyList())
     val events = remember(medicines, date) { Schedule.events(medicines, date) }
     val asNeededMedicines = remember(medicines) { medicines.filter { it.asNeeded } }
     val asNeededRecords = remember(records, events) {
@@ -613,7 +575,7 @@ private fun HistoryScreen(
     }
     val records by remember(from.timeInMillis, to.timeInMillis) {
         viewModel.observeIntakes(Schedule.dateKey(from), Schedule.dateKey(to))
-    }.collectAsStateWithLifecycle()
+    }.collectAsStateWithLifecycle(emptyList())
     val recordDates = remember(records) { records.map { it.date }.toSet() }
     val locale = LocalConfiguration.current.locales[0]
 
@@ -634,7 +596,7 @@ private fun HistoryScreen(
             }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_chevron_left),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.previous_month),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -647,7 +609,7 @@ private fun HistoryScreen(
             }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_chevron_right),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.next_month),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -843,7 +805,12 @@ private fun MedicinesScreen(
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Text("×", style = MaterialTheme.typography.titleLarge)
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_close),
+                                    contentDescription = stringResource(R.string.clear_search),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
                         }
                     },
@@ -1119,6 +1086,7 @@ private fun MedicineEditor(
                         stock,
                         { stock = it.filter(Char::isDigit) },
                         label = { Text(stringResource(R.string.stock)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         modifier = Modifier.weight(1f)
@@ -1127,6 +1095,7 @@ private fun MedicineEditor(
                         low,
                         { low = it.filter(Char::isDigit) },
                         label = { Text(stringResource(R.string.low_stock_threshold)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         modifier = Modifier.weight(1f)
@@ -1238,8 +1207,13 @@ private fun ProfileDialog(
                                 fontWeight = if (p == current) FontWeight.Bold else FontWeight.Normal
                             )
                             if (p != "Я") {
-                                IconButton(onClick = { onDelete(p) }, modifier = Modifier.size(28.dp)) {
-                                    Text("×", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
+                                IconButton(onClick = { onDelete(p) }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_delete),
+                                        contentDescription = stringResource(R.string.delete_profile),
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
                             }
                         }
@@ -1285,6 +1259,12 @@ private fun SettingsDialog(
     var isChecking by remember { mutableStateOf(false) }
     var statusText by remember { mutableStateOf<String?>(null) }
     var availableUpdate by remember { mutableStateOf<UpdateCheckResult.UpdateAvailable?>(null) }
+
+    val currentVersionName = remember(context) {
+        runCatching {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        }.getOrNull() ?: "2.0.0"
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1365,7 +1345,7 @@ private fun SettingsDialog(
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "v1.5.0",
+                                    text = "v$currentVersionName",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -1376,7 +1356,7 @@ private fun SettingsDialog(
                                     coroutineScope.launch {
                                         isChecking = true
                                         statusText = null
-                                        when (val result = UpdateManager.checkForUpdates("1.5.0")) {
+                                        when (val result = UpdateManager.checkForUpdates(currentVersionName)) {
                                             is UpdateCheckResult.UpdateAvailable -> {
                                                 availableUpdate = result
                                                 statusText = null

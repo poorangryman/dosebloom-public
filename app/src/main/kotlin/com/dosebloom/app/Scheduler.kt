@@ -9,23 +9,28 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.Calendar
 
 object Scheduler {
     private const val DAYS = 7
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val mutex = Mutex()
     @Volatile private var applicationContext: Context? = null
 
     fun cancelMedicine(context: Context?, medicine: Medicine) {
         val ctx = context?.applicationContext ?: applicationContext ?: return
         applicationContext = ctx
         scope.launch {
-            val am = ctx.getSystemService(AlarmManager::class.java)
-            val start = Calendar.getInstance()
-            for (day in 0..DAYS) {
-                val c = (start.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, day) }
-                val date = Schedule.dateKey(c)
-                for (time in medicine.times) am.cancel(pending(ctx, medicine.id, date, time))
+            mutex.withLock {
+                val am = ctx.getSystemService(AlarmManager::class.java)
+                val start = Calendar.getInstance()
+                for (day in 0..DAYS) {
+                    val c = (start.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, day) }
+                    val date = Schedule.dateKey(c)
+                    for (time in medicine.times) am.cancel(pending(ctx, medicine.id, date, time))
+                }
             }
         }
     }
@@ -43,42 +48,60 @@ object Scheduler {
         }
     }
 
+    suspend fun rescheduleAllDirect(app: Context) = mutex.withLock {
+        applicationContext = app.applicationContext
+        val entities = DoseBloomDatabase.get(app).medicineDao().all()
+        val medicines = entities.map { entity ->
+            Medicine(
+                entity.id,
+                entity.name,
+                entity.dose,
+                entity.unit,
+                entity.times.split(",").filter(String::isNotBlank),
+                entity.startDate,
+                entity.endDate,
+                entity.note,
+                entity.stock,
+                entity.lowStock,
+                entity.asNeeded == 1,
+                entity.profile
+            )
+        }
+        cancelAll(app, medicines)
+        val am = app.getSystemService(AlarmManager::class.java)
+        val now = System.currentTimeMillis()
+        val start = Calendar.getInstance()
+        for (m in medicines) {
+            if (m.asNeeded) continue
+            for (day in 0..DAYS) {
+                val c = (start.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, day) }
+                if (!Schedule.eligible(m, c)) continue
+                val date = Schedule.dateKey(c)
+                for (time in m.times) {
+                    if (!Schedule.validTime(time)) continue
+                    val p = time.split(":")
+                    val alarm = (c.clone() as Calendar).apply {
+                        set(Calendar.HOUR_OF_DAY, p[0].toInt())
+                        set(Calendar.MINUTE, p[1].toInt())
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+                    if (alarm.timeInMillis <= now) continue
+                    try {
+                        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarm.timeInMillis, pending(app, m.id, date, time))
+                    } catch (_: SecurityException) {
+                        am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarm.timeInMillis, pending(app, m.id, date, time))
+                    }
+                }
+            }
+        }
+    }
+
     fun rescheduleAll(context: Context?) {
         val app = context?.applicationContext ?: applicationContext ?: return
         applicationContext = app
         scope.launch {
-            val entities = DoseBloomDatabase.get(app).medicineDao().all()
-            val medicines = entities.map { entity ->
-                Medicine(entity.id, entity.name, entity.dose, entity.unit, entity.times.split(",").filter(String::isNotBlank), entity.startDate, entity.endDate, entity.note, entity.stock, entity.lowStock, entity.asNeeded == 1, entity.profile)
-            }
-            cancelAll(app, medicines)
-            val am = app.getSystemService(AlarmManager::class.java)
-            val now = System.currentTimeMillis()
-            val start = Calendar.getInstance()
-            for (m in medicines) {
-                if (m.asNeeded) continue
-                for (day in 0..DAYS) {
-                    val c = (start.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, day) }
-                    if (!Schedule.eligible(m, c)) continue
-                    val date = Schedule.dateKey(c)
-                    for (time in m.times) {
-                        if (!Schedule.validTime(time)) continue
-                        val p = time.split(":")
-                        val alarm = (c.clone() as Calendar).apply {
-                            set(Calendar.HOUR_OF_DAY, p[0].toInt())
-                            set(Calendar.MINUTE, p[1].toInt())
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }
-                        if (alarm.timeInMillis <= now) continue
-                        try {
-                            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarm.timeInMillis, pending(app, m.id, date, time))
-                        } catch (_: SecurityException) {
-                            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarm.timeInMillis, pending(app, m.id, date, time))
-                        }
-                    }
-                }
-            }
+            rescheduleAllDirect(app)
         }
     }
 
