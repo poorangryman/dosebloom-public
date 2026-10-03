@@ -26,4 +26,12 @@
     <string name="restock_amount">+%1$d</string>
     <string name="history_month_summary">Принято: %1$d • Регулярность: %2$d%%</string>
     <string name="profile_label">Профиль</string>
+    <string name="app_version">Версия приложения</string>
+    <string name="check_updates">Проверить</string>
+    <string name="checking_updates">Проверка…</string>
+    <string name="up_to_date">У вас последняя версия</string>
+    <string name="update_available">Доступно обновление</string>
+    <string name="update_failed">Ошибка проверки</string>
+    <string name="download_and_install">Скачать и установить</string>
+    <string name="update_downloading">Загрузка обновления…</string>
 </resources>

@@ -27,4 +27,12 @@
     <string name="restock_amount">+%1$d</string>
     <string name="history_month_summary">Taken: %1$d • Adherence: %2$d%%</string>
     <string name="profile_label">Profile</string>
+    <string name="app_version">App version</string>
+    <string name="check_updates">Check</string>
+    <string name="checking_updates">Checking…</string>
+    <string name="up_to_date">You have the latest version</string>
+    <string name="update_available">Update available</string>
+    <string name="update_failed">Check failed</string>
+    <string name="download_and_install">Download and install</string>
+    <string name="update_downloading">Downloading update…</string>
 </resources>

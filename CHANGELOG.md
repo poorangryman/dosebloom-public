@@ -1,5 +1,11 @@
 # Changelog
 
+## DoseBloom v1.5.0
+
+- Permanent RSA 4096-bit release signing keystore configuration
+- In-App update checker in Settings dialog with changelog display and one-tap installation via DownloadManager and FileProvider
+- Added `INTERNET` and `REQUEST_INSTALL_PACKAGES` permissions with `androidx.core.content.FileProvider`
+
 ## DoseBloom v1.4.9
 
 - Modern botanical UI with pure white cards and soft 20dp corners

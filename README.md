@@ -19,6 +19,7 @@ Designed for users who need a straightforward way to keep track of pill schedule
 - **Privacy First**: 100% local storage. No accounts required. Complete JSON data export/import (including intake history).
 - **Modern Adaptive UI**: Botanical color palette, edge-to-edge rendering, dark/light themes, and responsive navigation for phones, foldables, and tablets.
 - **Home Screen Widget**: View your next scheduled dose directly from your launcher.
+- **In-App Updates**: Check for new releases and install updates directly from the Settings dialog.
 
 ### Development & Technology
 I created DoseBloom for my own needs with heavy assistance from ChatGPT, as this is my first serious Android project. 
@@ -49,6 +50,7 @@ Bug reports, feature requests, and pull requests are welcome! If you are an expe
 - **Прием "по необходимости"**: Отдельный режим для лекарств без жесткого графика с кнопкой «Принять сейчас».
 - **Полная приватность**: Все данные хранятся только на телефоне. Поддерживается полный бэкап и перенос данных в формате JSON.
 - **Современный интерфейс**: Адаптивный Material 3 дизайн, поддержка тёмной темы, планшетов и экранов с вырезами. Удобный виджет для рабочего стола.
+- **Встроенное автообновление**: Проверка и установка новых версий прямо из экрана Настроек без браузера.
 
 ### Технологии и разработка
 Проект разрабатывался для личного использования при активной помощи ChatGPT. 
