@@ -72,7 +72,7 @@ object UpdateManager {
         }
     }
 
-    private fun isNewerVersion(remote: String, current: String): Boolean {
+    internal fun isNewerVersion(remote: String, current: String): Boolean {
         try {
             val rParts = remote.split(".").mapNotNull { it.toIntOrNull() }
             val cParts = current.split(".").mapNotNull { it.toIntOrNull() }

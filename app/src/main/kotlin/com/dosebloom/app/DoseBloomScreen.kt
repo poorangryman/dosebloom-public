@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -71,6 +72,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -347,7 +349,7 @@ private fun TodayScreen(
     modifier: Modifier
 ) {
     val date = Schedule.todayKey()
-    val records by remember(date) { viewModel.observeIntakes(date) }.collectAsStateWithLifecycle()
+    val records by remember(date) { viewModel.observeIntakes(date) }.collectAsStateWithLifecycle(emptyList())
     val events = remember(medicines, date) { Schedule.events(medicines, date) }
     val asNeededMedicines = remember(medicines) { medicines.filter { it.asNeeded } }
     val asNeededRecords = remember(records, events) {
@@ -613,7 +615,7 @@ private fun HistoryScreen(
     }
     val records by remember(from.timeInMillis, to.timeInMillis) {
         viewModel.observeIntakes(Schedule.dateKey(from), Schedule.dateKey(to))
-    }.collectAsStateWithLifecycle()
+    }.collectAsStateWithLifecycle(emptyList())
     val recordDates = remember(records) { records.map { it.date }.toSet() }
     val locale = LocalConfiguration.current.locales[0]
 
@@ -634,7 +636,7 @@ private fun HistoryScreen(
             }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_chevron_left),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.previous_month),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -647,7 +649,7 @@ private fun HistoryScreen(
             }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_chevron_right),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.next_month),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -843,7 +845,12 @@ private fun MedicinesScreen(
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Text("×", style = MaterialTheme.typography.titleLarge)
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_close),
+                                    contentDescription = stringResource(R.string.clear_search),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
                         }
                     },
@@ -1119,6 +1126,7 @@ private fun MedicineEditor(
                         stock,
                         { stock = it.filter(Char::isDigit) },
                         label = { Text(stringResource(R.string.stock)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         modifier = Modifier.weight(1f)
@@ -1127,6 +1135,7 @@ private fun MedicineEditor(
                         low,
                         { low = it.filter(Char::isDigit) },
                         label = { Text(stringResource(R.string.low_stock_threshold)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         modifier = Modifier.weight(1f)
@@ -1238,8 +1247,13 @@ private fun ProfileDialog(
                                 fontWeight = if (p == current) FontWeight.Bold else FontWeight.Normal
                             )
                             if (p != "Я") {
-                                IconButton(onClick = { onDelete(p) }, modifier = Modifier.size(28.dp)) {
-                                    Text("×", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
+                                IconButton(onClick = { onDelete(p) }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_delete),
+                                        contentDescription = stringResource(R.string.delete_profile),
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
                             }
                         }
@@ -1285,6 +1299,12 @@ private fun SettingsDialog(
     var isChecking by remember { mutableStateOf(false) }
     var statusText by remember { mutableStateOf<String?>(null) }
     var availableUpdate by remember { mutableStateOf<UpdateCheckResult.UpdateAvailable?>(null) }
+
+    val currentVersionName = remember(context) {
+        runCatching {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        }.getOrNull() ?: "2.0.0"
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1365,7 +1385,7 @@ private fun SettingsDialog(
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "v1.5.0",
+                                    text = "v$currentVersionName",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -1376,7 +1396,7 @@ private fun SettingsDialog(
                                     coroutineScope.launch {
                                         isChecking = true
                                         statusText = null
-                                        when (val result = UpdateManager.checkForUpdates("1.5.0")) {
+                                        when (val result = UpdateManager.checkForUpdates(currentVersionName)) {
                                             is UpdateCheckResult.UpdateAvailable -> {
                                                 availableUpdate = result
                                                 statusText = null

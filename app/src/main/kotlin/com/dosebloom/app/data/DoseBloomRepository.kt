@@ -33,7 +33,13 @@ class DoseBloomRepository(private val database: DoseBloomDatabase) {
 
     suspend fun removeProfile(name: String) = database.withTransaction {
         if (name != "Я") {
-            medicines.moveProfile(name, "Я")
+            val targetMedicines = medicines.all().filter { it.profile == "Я" }
+            val movingMedicines = medicines.all().filter { it.profile == name }
+            for (m in movingMedicines) {
+                val exists = targetMedicines.any { it.name.equals(m.name, ignoreCase = true) }
+                val newName = if (exists) "${m.name} ($name)" else m.name
+                medicines.update(m.copy(name = newName, profile = "Я"))
+            }
             profiles.delete(name)
         }
     }

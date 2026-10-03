@@ -18,63 +18,83 @@ private val widgetScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
 class NextDoseWidget : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
-        ids.forEach { update(context, manager, it) }
+        val pendingResult = goAsync()
+        val app = context.applicationContext
+        widgetScope.launch {
+            try {
+                ids.forEach { updateDirect(app, manager, it) }
+            } finally {
+                pendingResult.finish()
+            }
+        }
     }
 
     companion object {
-        fun refreshAll(context: Context) {
+        suspend fun refreshAllDirect(context: Context) {
             val app = context.applicationContext
             val manager = AppWidgetManager.getInstance(app)
             val component = android.content.ComponentName(app, NextDoseWidget::class.java)
-            manager.getAppWidgetIds(component).forEach { update(app, manager, it) }
+            manager.getAppWidgetIds(component).forEach { updateDirect(app, manager, it) }
+        }
+
+        fun refreshAll(context: Context) {
+            val app = context.applicationContext
+            widgetScope.launch {
+                refreshAllDirect(app)
+            }
+        }
+
+        suspend fun updateDirect(context: Context, manager: AppWidgetManager, id: Int) {
+            val app = context.applicationContext
+            val repository = DoseBloomRepository(DoseBloomDatabase.get(app))
+            val profile = SettingsRepository(app).selectedProfileOnce()
+            val medicineList = repository.observeAllMedicines().first().filter { it.profile == profile }
+            val now = Calendar.getInstance()
+            var found: Pair<Medicine, String>? = null
+            var foundMillis = Long.MAX_VALUE
+            for (offset in 0..7) {
+                val day = (now.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, offset) }
+                val date = Schedule.dateKey(day)
+                for ((medicine, time) in Schedule.events(medicineList, date)) {
+                    if (repository.hasIntake(medicine.id, date, time)) continue
+                    val p = time.split(":")
+                    val alarm = (day.clone() as Calendar).apply {
+                        set(Calendar.HOUR_OF_DAY, p[0].toInt())
+                        set(Calendar.MINUTE, p[1].toInt())
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+                    if (alarm.timeInMillis >= System.currentTimeMillis() && alarm.timeInMillis < foundMillis) {
+                        foundMillis = alarm.timeInMillis
+                        found = medicine to time
+                    }
+                }
+            }
+            val views = RemoteViews(app.packageName, R.layout.widget_next_dose)
+            val openAppIntent = android.app.PendingIntent.getActivity(
+                app,
+                0,
+                android.content.Intent(app, RefactoredMainActivity::class.java).apply {
+                    flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+                },
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_root, openAppIntent)
+            val item = found
+            if (item == null) {
+                views.setTextViewText(R.id.widget_title, app.getString(R.string.app_name))
+                views.setTextViewText(R.id.widget_body, app.getString(R.string.no_upcoming_doses))
+            } else {
+                views.setTextViewText(R.id.widget_title, app.getString(R.string.next_dose))
+                views.setTextViewText(R.id.widget_body, "${item.second} • ${item.first.name}")
+            }
+            manager.updateAppWidget(id, views)
         }
 
         fun update(context: Context, manager: AppWidgetManager, id: Int) {
             val app = context.applicationContext
             widgetScope.launch {
-                val repository = DoseBloomRepository(DoseBloomDatabase.get(app))
-                val profile = SettingsRepository(app).selectedProfileOnce()
-                val medicineList = repository.observeAllMedicines().first().filter { it.profile == profile }
-                val now = Calendar.getInstance()
-                var found: Pair<Medicine, String>? = null
-                var foundMillis = Long.MAX_VALUE
-                for (offset in 0..7) {
-                    val day = (now.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, offset) }
-                    val date = Schedule.dateKey(day)
-                    for ((medicine, time) in Schedule.events(medicineList, date)) {
-                        if (repository.hasIntake(medicine.id, date, time)) continue
-                        val p = time.split(":")
-                        val alarm = (day.clone() as Calendar).apply {
-                            set(Calendar.HOUR_OF_DAY, p[0].toInt())
-                            set(Calendar.MINUTE, p[1].toInt())
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }
-                        if (alarm.timeInMillis >= System.currentTimeMillis() && alarm.timeInMillis < foundMillis) {
-                            foundMillis = alarm.timeInMillis
-                            found = medicine to time
-                        }
-                    }
-                }
-                val views = RemoteViews(app.packageName, R.layout.widget_next_dose)
-                val openAppIntent = android.app.PendingIntent.getActivity(
-                    app,
-                    0,
-                    android.content.Intent(app, RefactoredMainActivity::class.java).apply {
-                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    },
-                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
-                )
-                views.setOnClickPendingIntent(R.id.widget_root, openAppIntent)
-                val item = found
-                if (item == null) {
-                    views.setTextViewText(R.id.widget_title, app.getString(R.string.app_name))
-                    views.setTextViewText(R.id.widget_body, app.getString(R.string.no_upcoming_doses))
-                } else {
-                    views.setTextViewText(R.id.widget_title, app.getString(R.string.next_dose))
-                    views.setTextViewText(R.id.widget_body, "${item.second} • ${item.first.name}")
-                }
-                manager.updateAppWidget(id, views)
+                updateDirect(app, manager, id)
             }
         }
     }

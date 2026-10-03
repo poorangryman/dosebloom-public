@@ -1,5 +1,19 @@
 # Changelog
 
+## DoseBloom v2.0.0
+
+- Architecture: eliminated `stateIn` subscription churn in ViewModel by exposing cold intake flows
+- Architecture: unified UI state with `DoseBloomUiState`
+- Performance: marked `Medicine` and `Intake` domain models as `@Immutable` for optimal Compose skipping
+- Reliability: added `goAsync()` to `BootReceiver` and `NextDoseWidget` to prevent Android process termination during background execution
+- Concurrency: synchronized `Scheduler` cancel and reschedule operations via `Mutex` to prevent alarm state collisions
+- Data: added `fallbackToDestructiveMigrationFrom(1)` to safeguard upgrades from legacy v1 database schemas
+- Data: resolved medication name collisions when migrating medicines upon profile deletion
+- Accessibility: replaced undersized touch targets with standard 48x48dp interactive controls
+- Accessibility: added TalkBack `contentDescription` for calendar month switchers, search clearing, and profile deletion
+- UX: added numeric keyboard types for supply and threshold input fields
+- Testing: added comprehensive unit tests for `UpdateManager`, `Schedule`, and `DoseBloomUiState`
+
 ## DoseBloom v1.5.0
 
 - Permanent RSA 4096-bit release signing keystore configuration

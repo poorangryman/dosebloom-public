@@ -20,7 +20,7 @@ class ExportImportService(private val context: Context) {
     suspend fun export(uri: Uri) = withContext(Dispatchers.IO) {
         val root = JSONObject().apply {
             put("schemaVersion", 2)
-            put("appVersion", runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "1.4.8")
+            put("appVersion", runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "2.0.0")
             put("exportedAt", System.currentTimeMillis())
             put("profiles", JSONArray(profileDao.allNames()))
             put("medicines", JSONArray().apply {

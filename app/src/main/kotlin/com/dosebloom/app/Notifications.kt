@@ -32,7 +32,13 @@ class ReminderReceiver : BroadcastReceiver() {
                 val medicine = repository.findMedicine(id) ?: return@launch
                 val nm = appContext.getSystemService(NotificationManager::class.java)
                 if (Build.VERSION.SDK_INT >= 26) {
-                    nm.createNotificationChannel(NotificationChannel("dosebloom_reminders", appContext.getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_HIGH))
+                    nm.createNotificationChannel(
+                        NotificationChannel(
+                            "dosebloom_reminders",
+                            appContext.getString(R.string.notification_channel_name),
+                            NotificationManager.IMPORTANCE_HIGH
+                        )
+                    )
                 }
                 val contentIntent = PendingIntent.getActivity(
                     appContext,
@@ -54,7 +60,7 @@ class ReminderReceiver : BroadcastReceiver() {
                     .addAction(0, appContext.getString(R.string.notification_skip), action(appContext, "SKIP", id, time, date, 3))
                     .build()
                 nm.notify(("$id|$date|$time").hashCode(), notification)
-                Scheduler.rescheduleAll(appContext)
+                Scheduler.rescheduleAllDirect(appContext)
             } finally {
                 pendingResult.finish()
             }
@@ -62,12 +68,17 @@ class ReminderReceiver : BroadcastReceiver() {
     }
 
     private fun action(context: Context, action: String, id: Long, time: String, date: String, request: Int) =
-        PendingIntent.getBroadcast(context, ("$id|$date|$time|$request").hashCode(), Intent(context, ActionReceiver::class.java).apply {
-            this.action = action
-            putExtra("medicineId", id)
-            putExtra("time", time)
-            putExtra("date", date)
-        }, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        PendingIntent.getBroadcast(
+            context,
+            ("$id|$date|$time|$request").hashCode(),
+            Intent(context, ActionReceiver::class.java).apply {
+                this.action = action
+                putExtra("medicineId", id)
+                putExtra("time", time)
+                putExtra("date", date)
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 }
 
 class ActionReceiver : BroadcastReceiver() {
@@ -86,8 +97,8 @@ class ActionReceiver : BroadcastReceiver() {
                     "POSTPONE" -> Scheduler.postpone(appContext, id, time, date)
                 }
                 appContext.getSystemService(NotificationManager::class.java).cancel(("$id|$date|$time").hashCode())
-                if (intent.action != "POSTPONE") Scheduler.rescheduleAll(appContext)
-                NextDoseWidget.refreshAll(appContext)
+                if (intent.action != "POSTPONE") Scheduler.rescheduleAllDirect(appContext)
+                NextDoseWidget.refreshAllDirect(appContext)
             } finally {
                 pendingResult.finish()
             }
@@ -98,8 +109,16 @@ class ActionReceiver : BroadcastReceiver() {
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_TIME_CHANGED || intent.action == Intent.ACTION_TIMEZONE_CHANGED) {
-            Scheduler.rescheduleAll(context.applicationContext)
-            NextDoseWidget.refreshAll(context.applicationContext)
+            val pendingResult = goAsync()
+            val appContext = context.applicationContext
+            receiverScope.launch {
+                try {
+                    Scheduler.rescheduleAllDirect(appContext)
+                    NextDoseWidget.refreshAllDirect(appContext)
+                } finally {
+                    pendingResult.finish()
+                }
+            }
         }
     }
 }
