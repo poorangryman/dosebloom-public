@@ -35,4 +35,10 @@ class UpdateManagerTest {
         assertTrue(UpdateManager.isNewerVersion("1.5.0.1", "1.5.0"))
         assertFalse(UpdateManager.isNewerVersion("1.5", "1.5.0"))
     }
+
+    @Test
+    fun v201IsNewerThanV200() {
+        assertTrue(UpdateManager.isNewerVersion("2.0.1", "2.0.0"))
+        assertFalse(UpdateManager.isNewerVersion("2.0.0", "2.0.1"))
+    }
 }

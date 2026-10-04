@@ -39,4 +39,9 @@
     <string name="next_month">Next month</string>
     <string name="clear_search">Clear search</string>
     <string name="delete_profile">Delete profile</string>
+    <string name="battery_optimization_title">Background work &amp; battery</string>
+    <string name="battery_optimization_enabled">Restricted (reminders may be delayed)</string>
+    <string name="battery_optimization_disabled">Unrestricted (reliable reminders)</string>
+    <string name="disable_battery_optimization">Remove restrictions</string>
+    <string name="install_update">Install</string>
 </resources>

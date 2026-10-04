@@ -1,5 +1,14 @@
 # Changelog
 
+## DoseBloom v2.0.1
+
+- Data Integrity: fixed PRN ("Take now") intake loss during JSON import by supporting repeated intake suffixes (`HH:mm (2)`) in `Schedule.validTime`
+- Reliability: added `USE_EXACT_ALARM` permission so Android 13+ devices receive exact medication reminders without requiring manual system settings toggling
+- Battery & Background: added battery optimization check and direct settings navigation to prevent OEM power managers (MIUI/OneUI/EMUI) from killing background reminder alarms
+- In-App Updater: improved lifecycle and UX with `DownloadState` tracking, download verification, cached APK handling, and direct install action
+- Architecture: modularized monolithic `DoseBloomScreen.kt` into dedicated composables (`TodayScreen`, `HistoryScreen`, `MedicinesScreen`, `MedicineEditor`, `ProfileDialog`, `SettingsDialog`, `Components`)
+- Testing: added unit test coverage for PRN timestamp suffix formats and v2.0.1 version comparisons
+
 ## DoseBloom v2.0.0
 
 - Architecture: eliminated `stateIn` subscription churn in ViewModel by exposing cold intake flows

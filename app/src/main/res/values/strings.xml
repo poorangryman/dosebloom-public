@@ -38,4 +38,9 @@
     <string name="next_month">Следующий месяц</string>
     <string name="clear_search">Очистить поиск</string>
     <string name="delete_profile">Удалить профиль</string>
+    <string name="battery_optimization_title">Фоновая работа и батарея</string>
+    <string name="battery_optimization_enabled">Ограничена (уведомления могут задерживаться)</string>
+    <string name="battery_optimization_disabled">Без ограничений (надежные напоминания)</string>
+    <string name="disable_battery_optimization">Снять ограничения</string>
+    <string name="install_update">Установить</string>
 </resources>
