@@ -5,12 +5,16 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
@@ -23,8 +27,18 @@ sealed class UpdateCheckResult {
     data class Error(val message: String) : UpdateCheckResult()
 }
 
+sealed class DownloadState {
+    data object Idle : DownloadState()
+    data class Downloading(val version: String) : DownloadState()
+    data class ReadyToInstall(val version: String, val file: File) : DownloadState()
+    data class Error(val message: String) : DownloadState()
+}
+
 object UpdateManager {
     private const val GITHUB_API_URL = "https://api.github.com/repos/poorangryman/dosebloom-public/releases/latest"
+
+    private val _downloadState = MutableStateFlow<DownloadState>(DownloadState.Idle)
+    val downloadState: StateFlow<DownloadState> = _downloadState.asStateFlow()
 
     suspend fun checkForUpdates(currentVersion: String): UpdateCheckResult = withContext(Dispatchers.IO) {
         try {
@@ -87,10 +101,21 @@ object UpdateManager {
         return false
     }
 
+    fun getDownloadedFile(context: Context, version: String): File {
+        val fileName = "DoseBloom-v$version.apk"
+        return File(context.applicationContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
+    }
+
     fun startDownloadAndInstall(context: Context, downloadUrl: String, version: String) {
         val appContext = context.applicationContext
-        val fileName = "DoseBloom-v$version.apk"
-        val destination = File(appContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
+        val destination = getDownloadedFile(appContext, version)
+
+        if (destination.exists() && destination.length() > 500_000) {
+            _downloadState.value = DownloadState.ReadyToInstall(version, destination)
+            installApk(context, destination)
+            return
+        }
+
         if (destination.exists()) {
             destination.delete()
         }
@@ -105,6 +130,7 @@ object UpdateManager {
 
         val downloadManager = appContext.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val downloadId = downloadManager.enqueue(request)
+        _downloadState.value = DownloadState.Downloading(version)
 
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(recvContext: Context?, intent: Intent?) {
@@ -113,7 +139,24 @@ object UpdateManager {
                     try {
                         appContext.unregisterReceiver(this)
                     } catch (_: Exception) {}
-                    installApk(context, destination)
+
+                    val query = DownloadManager.Query().setFilterById(downloadId)
+                    val cursor: Cursor? = downloadManager.query(query)
+                    var success = false
+                    if (cursor != null && cursor.moveToFirst()) {
+                        val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                        if (statusIndex != -1 && cursor.getInt(statusIndex) == DownloadManager.STATUS_SUCCESSFUL) {
+                            success = true
+                        }
+                        cursor.close()
+                    }
+
+                    if (success && destination.exists()) {
+                        _downloadState.value = DownloadState.ReadyToInstall(version, destination)
+                        installApk(context, destination)
+                    } else {
+                        _downloadState.value = DownloadState.Error("Download failed")
+                    }
                 }
             }
         }

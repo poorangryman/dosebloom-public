@@ -25,6 +25,14 @@ class ScheduleTest {
     }
 
     @Test
+    fun validTimeAcceptsTakeNowSuffixes() {
+        assertTrue(Schedule.validTime("14:30 (2)"))
+        assertTrue(Schedule.validTime("08:05 (10)"))
+        assertFalse(Schedule.validTime("14:30 ()"))
+        assertFalse(Schedule.validTime("14:30 (a)"))
+    }
+
+    @Test
     fun normalizeTimePadsSingleDigitHour() {
         assertEquals("08:30", Schedule.normalizeTime("8:30"))
         assertEquals("09:00", Schedule.normalizeTime("9:00"))

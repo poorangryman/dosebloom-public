@@ -25,7 +25,7 @@ object Schedule {
             .flatMap { m -> m.times.map { m to it } }
             .sortedBy { it.second }
     }
-    fun validTime(s: String): Boolean = Regex("^(?:[01]\\d|2[0-3]):[0-5]\\d$").matches(s)
+    fun validTime(s: String): Boolean = Regex("^(?:[01]\\d|2[0-3]):[0-5]\\d(?: \\(\\d+\\))?$").matches(s)
     fun normalizeTime(s: String): String {
         val trimmed = s.trim()
         val parts = trimmed.split(":")
